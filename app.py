@@ -110,10 +110,198 @@ class SQLiteWrapper:
         except:
             pass
 
+last_reconnect_attempt = 0
 USE_SQLITE = False
+is_syncing = False
+
+def trigger_db_sync():
+    global is_syncing
+    if is_syncing:
+        return
+    t = threading.Thread(target=sync_databases)
+    t.daemon = True
+    t.start()
+
+def sync_databases():
+    global is_syncing
+    if is_syncing:
+        return
+    is_syncing = True
+    print("Database sync started: Neon <-> Local SQLite")
+    
+    pg_conn = None
+    sl_conn = None
+    try:
+        import time
+        db_url = os.getenv("DATABASE_URL", "postgresql://neondb_owner:npg_9TpadKYDM8qI@ep-steep-fog-ain8sh9l-pooler.c-4.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require")
+        pg_conn = psycopg2.connect(db_url)
+        pg_conn.autocommit = False
+        pg_cur = pg_conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        
+        sl_conn = sqlite3.connect(DB_PATH)
+        sl_conn.row_factory = sqlite3.Row
+        sl_cur = sl_conn.cursor()
+        
+        # Ensure target tables exist on Postgres (for fresh Neon db instances)
+        pg_cur.execute('''CREATE TABLE IF NOT EXISTS admins (
+            id SERIAL PRIMARY KEY,
+            username TEXT UNIQUE NOT NULL,
+            password TEXT NOT NULL
+        )''')
+        pg_cur.execute('''CREATE TABLE IF NOT EXISTS clouds (
+            id SERIAL PRIMARY KEY,
+            name TEXT UNIQUE NOT NULL,
+            password TEXT NOT NULL,
+            storage_path TEXT NOT NULL,
+            limit_gb INTEGER DEFAULT 100,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            admin_owner TEXT DEFAULT 'admin'
+        )''')
+        pg_cur.execute('''CREATE TABLE IF NOT EXISTS users (
+            id SERIAL PRIMARY KEY,
+            username TEXT UNIQUE NOT NULL,
+            password TEXT NOT NULL,
+            connected_cloud TEXT DEFAULT NULL,
+            joined_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )''')
+        pg_cur.execute('''CREATE TABLE IF NOT EXISTS files (
+            id SERIAL PRIMARY KEY,
+            cloud_name TEXT NOT NULL,
+            filename TEXT NOT NULL,
+            original_name TEXT NOT NULL,
+            size INTEGER NOT NULL,
+            file_type TEXT NOT NULL,
+            uploaded_by TEXT NOT NULL,
+            uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )''')
+        try:
+            pg_cur.execute("ALTER TABLE clouds ADD COLUMN IF NOT EXISTS admin_owner TEXT DEFAULT 'admin'")
+        except:
+            pg_conn.rollback()
+        pg_conn.commit()
+
+        # 1. SYNC ADMINS (Match on username)
+        pg_cur.execute("SELECT username, password FROM admins")
+        pg_admins = {row['username']: row['password'] for row in pg_cur.fetchall()}
+        
+        sl_cur.execute("SELECT username, password FROM admins")
+        sl_admins = {row['username']: row['password'] for row in sl_cur.fetchall()}
+        
+        for username, password in sl_admins.items():
+            if username not in pg_admins:
+                pg_cur.execute("INSERT INTO admins (username, password) VALUES (%s, %s)", (username, password))
+        for username, password in pg_admins.items():
+            if username not in sl_admins:
+                sl_cur.execute("INSERT INTO admins (username, password) VALUES (?, ?)", (username, password))
+        
+        # 2. SYNC CLOUDS (Match on cloud name)
+        pg_cur.execute("SELECT name, password, storage_path, limit_gb, created_at, admin_owner FROM clouds")
+        pg_clouds = {row['name']: row for row in pg_cur.fetchall()}
+        
+        sl_cur.execute("SELECT name, password, storage_path, limit_gb, created_at, admin_owner FROM clouds")
+        sl_clouds = {row['name']: row for row in sl_cur.fetchall()}
+        
+        for name, row in sl_clouds.items():
+            if name not in pg_clouds:
+                pg_cur.execute(
+                    "INSERT INTO clouds (name, password, storage_path, limit_gb, created_at, admin_owner) VALUES (%s, %s, %s, %s, %s, %s)",
+                    (name, row['password'], row['storage_path'], row['limit_gb'], row['created_at'], row['admin_owner'])
+                )
+        for name, row in pg_clouds.items():
+            if name not in sl_clouds:
+                sl_cur.execute(
+                    "INSERT INTO clouds (name, password, storage_path, limit_gb, created_at, admin_owner) VALUES (?, ?, ?, ?, ?, ?)",
+                    (row['name'], row['password'], row['storage_path'], row['limit_gb'], row['created_at'], row['admin_owner'])
+                )
+        
+        # 3. SYNC USERS (Match on username)
+        pg_cur.execute("SELECT username, password, connected_cloud, joined_at FROM users")
+        pg_users = {row['username']: row for row in pg_cur.fetchall()}
+        
+        sl_cur.execute("SELECT username, password, connected_cloud, joined_at FROM users")
+        sl_users = {row['username']: row for row in sl_cur.fetchall()}
+        
+        for username, row in sl_users.items():
+            if username not in pg_users:
+                pg_cur.execute(
+                    "INSERT INTO users (username, password, connected_cloud, joined_at) VALUES (%s, %s, %s, %s)",
+                    (username, row['password'], row['connected_cloud'], row['joined_at'])
+                )
+            else:
+                if row['connected_cloud'] != pg_users[username]['connected_cloud'] and row['connected_cloud'] is not None:
+                    pg_cur.execute(
+                        "UPDATE users SET connected_cloud = %s WHERE username = %s",
+                        (row['connected_cloud'], username)
+                    )
+        for username, row in pg_users.items():
+            if username not in sl_users:
+                sl_cur.execute(
+                    "INSERT INTO users (username, password, connected_cloud, joined_at) VALUES (?, ?, ?, ?)",
+                    (row['username'], row['password'], row['connected_cloud'], row['joined_at'])
+                )
+            else:
+                if row['connected_cloud'] != sl_users[username]['connected_cloud'] and row['connected_cloud'] is not None:
+                    sl_cur.execute(
+                        "UPDATE users SET connected_cloud = ? WHERE username = ?",
+                        (row['connected_cloud'], username)
+                    )
+        
+        # 4. SYNC FILES (Match on unique filename)
+        pg_cur.execute("SELECT filename, cloud_name, original_name, size, file_type, uploaded_by, uploaded_at FROM files")
+        pg_files = {row['filename']: row for row in pg_cur.fetchall()}
+        
+        sl_cur.execute("SELECT filename, cloud_name, original_name, size, file_type, uploaded_by, uploaded_at FROM files")
+        sl_files = {row['filename']: row for row in sl_cur.fetchall()}
+        
+        for filename, row in sl_files.items():
+            if filename not in pg_files:
+                pg_cur.execute(
+                    "INSERT INTO files (filename, cloud_name, original_name, size, file_type, uploaded_by, uploaded_at) VALUES (%s, %s, %s, %s, %s, %s, %s)",
+                    (filename, row['cloud_name'], row['original_name'], row['size'], row['file_type'], row['uploaded_by'], row['uploaded_at'])
+                )
+        for filename, row in pg_files.items():
+            if filename not in sl_files:
+                sl_cur.execute(
+                    "INSERT INTO files (filename, cloud_name, original_name, size, file_type, uploaded_by, uploaded_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                    (row['filename'], row['cloud_name'], row['original_name'], row['size'], row['file_type'], row['uploaded_by'], row['uploaded_at'])
+                )
+        
+        pg_conn.commit()
+        sl_conn.commit()
+        print("Database sync completed successfully: Neon <-> Local SQLite.")
+    except Exception as e:
+        print(f"Database sync failed: {e}")
+        if pg_conn:
+            pg_conn.rollback()
+        if sl_conn:
+            sl_conn.rollback()
+    finally:
+        is_syncing = False
+        if pg_conn:
+            pg_conn.close()
+        if sl_conn:
+            sl_conn.close()
 
 def get_db():
-    global DB_POOL, USE_SQLITE
+    global DB_POOL, USE_SQLITE, last_reconnect_attempt
+    import time
+    now = time.time()
+    
+    if USE_SQLITE:
+        # Check connection to Postgres back every 30 seconds
+        if now - last_reconnect_attempt > 30:
+            last_reconnect_attempt = now
+            print("Attempting to reconnect to PostgreSQL (Neon) database...")
+            try:
+                db_url = os.getenv("DATABASE_URL", "postgresql://neondb_owner:npg_9TpadKYDM8qI@ep-steep-fog-ain8sh9l-pooler.c-4.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require")
+                test_conn = psycopg2.connect(db_url, connect_timeout=3)
+                test_conn.close()
+                print("Reconnection successful! Switching back to PostgreSQL.")
+                USE_SQLITE = False
+                trigger_db_sync()
+            except Exception as e:
+                print(f"Reconnection failed: {e}. Remaining in SQLite fallback mode.")
+    
     if USE_SQLITE:
         conn = sqlite3.connect(DB_PATH)
         conn.row_factory = sqlite3.Row
@@ -142,8 +330,10 @@ def get_db():
         
         raise Exception("OperationalError: failed to connect to PG pool")
     except Exception as e:
-        print(f"Warning: PG Database connection failed: {e}. Falling back to local SQLite database at {DB_PATH}")
-        USE_SQLITE = True
+        if not USE_SQLITE:
+            print(f"Warning: PG Database connection failed: {e}. Falling back to local SQLite database at {DB_PATH}")
+            USE_SQLITE = True
+            last_reconnect_attempt = now
         conn = sqlite3.connect(DB_PATH)
         conn.row_factory = sqlite3.Row
         return SQLiteWrapper(conn)
@@ -759,8 +949,36 @@ def download_file(file_id):
     conn.close()
     if not cloud:
         return jsonify({'error': 'Cloud not found'}), 404
+
     if not is_cloud_online(cloud['storage_path']):
+        # Fallback: check if we have a remote tunnel_url active
+        conn = get_db()
+        c_row = conn.execute("SELECT tunnel_url FROM clouds WHERE name=?", (f['cloud_name'],)).fetchone()
+        conn.close()
+        if c_row and c_row['tunnel_url']:
+            import requests
+            try:
+                remote_url = c_row['tunnel_url'].rstrip('/') + f"/api/user/files/{file_id}/download"
+                cookies = {k: v for k, v in request.cookies.items()}
+                res = requests.get(remote_url, cookies=cookies, stream=True)
+                if res.status_code == 200:
+                    headers = dict(res.headers)
+                    def generate():
+                        for chunk in res.iter_content(chunk_size=8192):
+                            yield chunk
+                    from flask import Response
+                    return Response(
+                        generate(),
+                        headers={
+                            'Content-Disposition': headers.get('Content-Disposition', f'attachment; filename="{f["original_name"]}"'),
+                            'Content-Type': headers.get('Content-Type', 'application/octet-stream'),
+                            'Content-Length': headers.get('Content-Length')
+                        }
+                    )
+            except Exception as e:
+                print(f"Proxy download failed: {e}")
         return jsonify({'error': 'Cloud storage is offline (USB drive unplugged by admin)'}), 400
+
     return send_from_directory(
         os.path.join(cloud['storage_path'], secure_filename(session['user'] or 'user')),
         f['filename'],
@@ -781,8 +999,35 @@ def preview_file(file_id):
     conn.close()
     if not cloud:
         return jsonify({'error': 'Cloud not found'}), 404
+
     if not is_cloud_online(cloud['storage_path']):
+        # Fallback: check if we have a remote tunnel_url active
+        conn = get_db()
+        c_row = conn.execute("SELECT tunnel_url FROM clouds WHERE name=?", (f['cloud_name'],)).fetchone()
+        conn.close()
+        if c_row and c_row['tunnel_url']:
+            import requests
+            try:
+                remote_url = c_row['tunnel_url'].rstrip('/') + f"/api/user/files/{file_id}/preview"
+                cookies = {k: v for k, v in request.cookies.items()}
+                res = requests.get(remote_url, cookies=cookies, stream=True)
+                if res.status_code == 200:
+                    headers = dict(res.headers)
+                    def generate():
+                        for chunk in res.iter_content(chunk_size=8192):
+                            yield chunk
+                    from flask import Response
+                    return Response(
+                        generate(),
+                        headers={
+                            'Content-Type': headers.get('Content-Type', 'application/octet-stream'),
+                            'Content-Length': headers.get('Content-Length')
+                        }
+                    )
+            except Exception as e:
+                print(f"Proxy preview failed: {e}")
         return jsonify({'error': 'Cloud storage is offline (USB drive unplugged by admin)'}), 400
+
     file_path = os.path.join(cloud['storage_path'], secure_filename(session['user'] or 'user'), f['filename'])
     if not os.path.exists(file_path):
         return jsonify({'error': 'File missing on disk'}), 404
@@ -815,6 +1060,22 @@ def download_portal():
 def setup_wizard():
     return render_template('setup.html')
 
+
+@app.route('/api/server/sync', methods=['POST'])
+def force_sync():
+    global USE_SQLITE
+    if USE_SQLITE:
+        try:
+            db_url = os.getenv("DATABASE_URL", "postgresql://neondb_owner:npg_9TpadKYDM8qI@ep-steep-fog-ain8sh9l-pooler.c-4.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require")
+            test_conn = psycopg2.connect(db_url, connect_timeout=3)
+            test_conn.close()
+            USE_SQLITE = False
+            print("Reconnected to Neon via manual sync route!")
+        except Exception as e:
+            return jsonify({'success': False, 'message': f'PostgreSQL database is unreachable: {e}. Sync disabled.'}), 503
+            
+    trigger_db_sync()
+    return jsonify({'success': True, 'message': 'Sync started in background.'})
 
 @app.route('/api/server/status')
 def server_status():
@@ -1023,6 +1284,101 @@ def install_app_files():
         
     return True, "Unsupported OS for auto-install"
 
+class DesktopApi:
+    def save_file(self, file_id):
+        try:
+            import webview
+            conn = get_db()
+            f = conn.execute("SELECT filename, original_name, size, cloud_name, uploaded_by FROM files WHERE id=?", (file_id,)).fetchone()
+            if not f:
+                conn.close()
+                return {"success": False, "message": "File record not found in database"}
+            
+            cloud = conn.execute("SELECT storage_path FROM clouds WHERE name=?", (f['cloud_name'],)).fetchone()
+            conn.close()
+            
+            if not cloud:
+                return {"success": False, "message": "Cloud connection not found"}
+            
+            # Resolve local source path
+            vault_path = os.path.join(cloud['storage_path'], secure_filename(f['uploaded_by'] or 'user'))
+            src_path = os.path.join(vault_path, f['filename'])
+            
+            total_size = f['size'] or 1
+            
+            # Open native Save File Dialog
+            save_path = webview.active_window().create_file_dialog(
+                webview.SAVE_DIALOG,
+                save_filename=f['original_name']
+            )
+            
+            if not save_path:
+                return {"success": False, "message": "Save cancelled"}
+                
+            if isinstance(save_path, (list, tuple)):
+                if len(save_path) > 0:
+                    save_path = save_path[0]
+                else:
+                    return {"success": False, "message": "Save cancelled"}
+            
+            if not save_path:
+                return {"success": False, "message": "Save cancelled"}
+
+            # Trigger progress start in UI
+            webview.active_window().evaluate_js(f"showDownloadProgress(0, 'Starting download: {f['original_name']}')")
+            
+            # Check if file is available locally
+            if is_cloud_online(cloud['storage_path']) and os.path.exists(src_path):
+                # Local copy with chunked progress reporting
+                with open(src_path, 'rb') as fsrc:
+                    with open(save_path, 'wb') as fdst:
+                        copied = 0
+                        while True:
+                            chunk = fsrc.read(1024 * 1024)  # 1MB chunk
+                            if not chunk:
+                                break
+                            fdst.write(chunk)
+                            copied += len(chunk)
+                            percent = int((copied / total_size) * 100)
+                            percent = min(100, max(0, percent))
+                            webview.active_window().evaluate_js(f"showDownloadProgress({percent}, 'Saving locally: {percent}%')")
+                return {"success": True, "message": "File saved successfully"}
+            else:
+                # Remote download over the tunnel
+                conn = get_db()
+                c_row = conn.execute("SELECT tunnel_url FROM clouds WHERE name=?", (f['cloud_name'],)).fetchone()
+                conn.close()
+                if not c_row or not c_row['tunnel_url']:
+                    return {"success": False, "message": "Cloud storage is offline (remote host unreachable)"}
+                
+                import requests
+                remote_url = c_row['tunnel_url'].rstrip('/') + f"/api/user/files/{file_id}/download"
+                
+                # Fetch cookies from PyWebView session
+                cookies = {}
+                try:
+                    for cookie in webview.active_window().get_cookies():
+                        cookies[cookie.name] = cookie.value
+                except Exception as ce:
+                    print(f"Error fetching cookies: {ce}")
+                
+                res = requests.get(remote_url, cookies=cookies, stream=True)
+                if res.status_code != 200:
+                    return {"success": False, "message": f"Remote host returned error {res.status_code}"}
+                
+                with open(save_path, 'wb') as fdst:
+                    downloaded = 0
+                    for chunk in res.iter_content(chunk_size=256 * 1024):  # 256KB chunk
+                        if chunk:
+                            fdst.write(chunk)
+                            downloaded += len(chunk)
+                            percent = int((downloaded / total_size) * 100)
+                            percent = min(100, max(0, percent))
+                            webview.active_window().evaluate_js(f"showDownloadProgress({percent}, 'Downloading: {percent}%')")
+                return {"success": True, "message": "File saved successfully"}
+        except Exception as e:
+            return {"success": False, "message": str(e)}
+
 class SetupApi:
     def select_folder(self):
         try:
@@ -1113,7 +1469,8 @@ if __name__ == '__main__':
             print("Serving at http://127.0.0.1:5001 inside native frame\n")
             
             wait_for_port(5001)
-            webview.create_window("MyCloud Desktop (Dev)", "http://127.0.0.1:5001", width=1200, height=800)
+            api_instance = DesktopApi()
+            webview.create_window("MyCloud Desktop (Dev)", "http://127.0.0.1:5001", width=1200, height=800, js_api=api_instance)
             webview.start()
     else:
         # Frozen (Packaged) Mode
@@ -1156,5 +1513,6 @@ if __name__ == '__main__':
             t.start()
             
             wait_for_port(5001)
-            webview.create_window("MyCloud Desktop", "http://127.0.0.1:5001", width=1200, height=800)
+            api_instance = DesktopApi()
+            webview.create_window("MyCloud Desktop", "http://127.0.0.1:5001", width=1200, height=800, js_api=api_instance)
             webview.start()

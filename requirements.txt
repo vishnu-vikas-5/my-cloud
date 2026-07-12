@@ -6,3 +6,4 @@ Pillow
 pywebview
 pyinstaller
 gunicorn
+requests

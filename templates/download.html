@@ -71,6 +71,7 @@
       pointer-events: none;
       animation: float-orb 28s infinite alternate ease-in-out;
     }
+
     .orb-1 {
       width: 50vw;
       height: 50vw;
@@ -79,6 +80,7 @@
       left: -10%;
       animation-duration: 32s;
     }
+
     .orb-2 {
       width: 45vw;
       height: 45vw;
@@ -88,6 +90,7 @@
       animation-duration: 36s;
       animation-delay: -6s;
     }
+
     .orb-3 {
       width: 40vw;
       height: 40vw;
@@ -102,9 +105,11 @@
       0% {
         transform: translate(0, 0) scale(1);
       }
+
       50% {
         transform: translate(8vw, 6vh) scale(1.15);
       }
+
       100% {
         transform: translate(-5vw, -8vh) scale(0.9);
       }
@@ -553,7 +558,8 @@
 
       <div class="download-grid">
         <!-- macOS -->
-        <a href="https://github.com/vishnu-vikas-5/my-cloud/releases/download/v1.1.0/MyCloud-macOS.dmg" class="dl-card mac">
+        <a href="https://github.com/vishnu-vikas-5/my-cloud/releases/download/v1.1.0/MyCloud-macOS.dmg"
+          class="dl-card mac">
           <div>
             <div class="dl-icon"></div>
             <div class="dl-platform">macOS App</div>
@@ -563,7 +569,8 @@
         </a>
 
         <!-- Windows -->
-        <a href="https://github.com/vishnu-vikas-5/my-cloud/releases/download/v1.1.0/MyCloud-Windows.exe" class="dl-card win">
+        <a href="https://github.com/vishnu-vikas-5/my-cloud/releases/download/v1.1.0/MyCloud-Windows.exe"
+          class="dl-card win">
           <div>
             <div class="dl-icon">❖</div>
             <div class="dl-platform">Windows App</div>
@@ -613,15 +620,20 @@
             <p>Follow these steps to configure and install MyCloud on your Mac:</p>
             <ol class="steps-list">
               <li>Download the <code class="code-badge">MyCloud-macOS.dmg</code> installer disk image.</li>
-              <li>Double-click the DMG file to mount it, then drag <code class="code-badge">MyCloud.app</code> into your <b>Applications</b> folder.</li>
-              <li>Since the app is downloaded from a browser, macOS Gatekeeper may quarantine it. To bypass this, open Terminal and run:
+              <li>Double-click the DMG file to mount it, then drag <code class="code-badge">MyCloud.app</code> into your
+                <b>Applications</b> folder.</li>
+              <li>Since the app is downloaded from a browser, macOS Gatekeeper may quarantine it. To bypass this, open
+                Terminal and run:
                 <br /><code class="code-badge">xattr -cr /Applications/MyCloud.app</code>
               </li>
               <li>Alternatively, right-click (Control-click) the app inside your Applications folder, select
-                <b>Open</b>, and confirm. Or go to <b>System Settings > Privacy & Security</b> and click <b>Open Anyway</b>.</li>
+                <b>Open</b>, and confirm. Or go to <b>System Settings > Privacy & Security</b> and click <b>Open
+                  Anyway</b>.
+              </li>
               <li>The <b>MyCloud Setup Wizard</b> will open. Click <b>Browse</b> to select the folder where you want to
                 store your cloud backend files.</li>
-              <li>Click <b>Install & Complete Setup</b>. The app will automatically set up the local backend database and launch.</li>
+              <li>Click <b>Install & Complete Setup</b>. The app will automatically set up the local backend database
+                and launch.</li>
             </ol>
           </div>
         </div>
@@ -643,7 +655,8 @@
                       file</b>.</li>
                   <li>If Windows Defender deletes it, open <b>Windows Security</b> &gt; <b>Virus & threat protection</b>
                     &gt; <b>Protection history</b>, find the blocked file, and select <b>Allow on device</b> or
-                    <b>Restore</b>.</li>
+                    <b>Restore</b>.
+                  </li>
                 </ul>
               </li>
               <li>Double-click the file to launch the installer.</li>

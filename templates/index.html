@@ -2921,6 +2921,16 @@
           </div>
         </div>
 
+        <div id="download-progress" class="hidden upload-progress" style="margin-bottom:10px; background: rgba(0, 255, 204, 0.05); border-color: rgba(0, 255, 204, 0.2);">
+          <div class="upload-progress-top">
+            <span id="download-progress-label" style="color: #00ffcc;">Preparing download</span>
+            <span id="download-progress-percent" style="color: #00ffcc;">0%</span>
+          </div>
+          <div class="upload-track" style="background: rgba(255, 255, 255, 0.05);">
+            <div id="download-progress-bar" class="upload-bar" style="background: linear-gradient(90deg, #00ffcc, #7c9dff); box-shadow: 0 0 10px rgba(0, 255, 204, 0.4); width: 0%;"></div>
+          </div>
+        </div>
+
         <!-- Filter -->
         <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap;">
           <button class="tab active" id="uf-all" onclick="uFilter('all')">All</button>
@@ -3092,6 +3102,17 @@
           <div style="display:flex; align-items:center; gap:8px; margin-top:4px;">
             <input id="s-autoconnect" type="checkbox" style="width:16px; height:16px; margin:0;" onchange="saveSetting('autoconnect', this.checked)" />
             <span style="font-size:13px; font-weight:600; color:var(--text-soft);">Connect to vault automatically on startup</span>
+          </div>
+
+          <div style="border-top: 1px solid rgba(255, 255, 255, 0.05); padding-top: 14px; margin-top: 6px; display: flex; flex-direction: column; gap: 8px;">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <div>
+                <div style="font-size:13px; font-weight:700; color:var(--text);">Neon DB Synchronization</div>
+                <div style="font-size:11px; color:var(--muted); margin-top:2px;">Sync your local database data back & forth with Neon Postgres.</div>
+              </div>
+              <button class="btn btn-purple btn-sm" id="btn-sync-db" onclick="syncDatabaseNow()" style="padding: 6px 14px; font-size: 12px; font-weight: 700;">Sync Now</button>
+            </div>
+            <div id="sync-status-msg" class="text-caption hidden" style="font-size:11px; margin-top:2px;"></div>
           </div>
         </div>
       </div>
@@ -3637,6 +3658,40 @@
     function saveSetting(key, val) {
       localStorage.setItem('mycloud-setting-' + key, val);
       showToast('⚙️', `Preference updated!`);
+    }
+
+    async function syncDatabaseNow() {
+      const btn = document.getElementById('btn-sync-db');
+      const statusMsg = document.getElementById('sync-status-msg');
+      btn.disabled = true;
+      btn.innerText = "Syncing...";
+      
+      statusMsg.classList.remove('hidden');
+      statusMsg.style.color = 'var(--text-soft)';
+      statusMsg.innerText = "Connecting to Neon and syncing tables...";
+      
+      try {
+        const res = await api('/api/server/sync', 'POST');
+        if (res.success) {
+          statusMsg.style.color = '#00ffcc';
+          statusMsg.innerText = "✓ Sync successful! Data is up to date.";
+          showToast('🔄', 'Database sync complete!');
+          if (typeof loadAdminClouds === 'function') loadAdminClouds();
+          if (typeof loadUserFiles === 'function') loadUserFiles();
+        } else {
+          statusMsg.style.color = '#ff6b7a';
+          statusMsg.innerText = "✗ Sync failed: " + res.message;
+        }
+      } catch (err) {
+        statusMsg.style.color = '#ff6b7a';
+        statusMsg.innerText = "✗ Network error: unable to reach local server.";
+      } finally {
+        btn.disabled = false;
+        btn.innerText = "Sync Now";
+        setTimeout(() => {
+          statusMsg.classList.add('hidden');
+        }, 5000);
+      }
     }
 
     function showToast(icon, title, duration = 2500) {
@@ -4350,7 +4405,7 @@
       </div>
       <div class="file-actions">
         <button class="btn btn-sm btn-purple" ${isCloudOffline ? 'disabled' : ''} onclick='previewFile(${f.id}, ${JSON.stringify(f.original_name)})'>Preview</button>
-        <button class="btn btn-sm" ${isCloudOffline ? 'disabled' : ''} onclick="downloadFile(${f.id})">Download</button>
+        <button class="btn btn-sm" ${isCloudOffline ? 'disabled' : ''} onclick="downloadFile(${f.id}, '${f.original_name.replace(/'/g, "\\'")}')">Download</button>
         <button class="btn btn-red btn-sm" ${isCloudOffline ? 'disabled' : ''} onclick="delUserFile(${f.id})">Delete</button>
       </div>
     </div>`).join('');
@@ -4361,8 +4416,100 @@
       loadUserFiles();
     }
 
-    function downloadFile(id) {
-      window.location.href = '/api/user/files/' + id + '/download';
+    function showDownloadProgress(percent, label) {
+      const panel = document.getElementById('download-progress');
+      const bar = document.getElementById('download-progress-bar');
+      const percentLabel = document.getElementById('download-progress-percent');
+      const textLabel = document.getElementById('download-progress-label');
+      
+      panel.classList.remove('hidden');
+      bar.style.width = percent + '%';
+      percentLabel.textContent = percent + '%';
+      textLabel.textContent = label;
+      
+      if (percent >= 100) {
+        setTimeout(() => panel.classList.add('hidden'), 3000);
+      }
+    }
+
+    async function downloadFile(id, originalName) {
+      const progressPanel = document.getElementById('download-progress');
+      const progressBar = document.getElementById('download-progress-bar');
+      const progressPercent = document.getElementById('download-progress-percent');
+      const progressLabel = document.getElementById('download-progress-label');
+      
+      progressPanel.classList.remove('hidden');
+      progressBar.style.width = '0%';
+      progressPercent.textContent = '0%';
+      progressLabel.textContent = 'Starting download: ' + originalName;
+
+      if (window.pywebview && window.pywebview.api && typeof window.pywebview.api.save_file === 'function') {
+        try {
+          const res = await window.pywebview.api.save_file(id);
+          if (res && res.success) {
+            showToast('💾', 'File saved successfully!');
+            showDownloadProgress(100, 'Saved successfully!');
+          } else if (res && res.message && res.message !== "Save cancelled") {
+            showToast('❌', 'Error: ' + res.message);
+            showDownloadProgress(0, 'Download failed: ' + res.message);
+            setTimeout(() => progressPanel.classList.add('hidden'), 4000);
+          } else {
+            progressPanel.classList.add('hidden');
+          }
+        } catch (err) {
+          showToast('❌', 'Download error');
+          showDownloadProgress(0, 'Error: ' + err.message);
+          setTimeout(() => progressPanel.classList.add('hidden'), 4000);
+        }
+      } else {
+        try {
+          const downloadUrl = '/api/user/files/' + id + '/download';
+          const response = await fetch(downloadUrl, { credentials: 'include' });
+          if (!response.ok) throw new Error('Status ' + response.status);
+          
+          const contentLength = response.headers.get('content-length');
+          if (!contentLength) {
+            const blob = await response.blob();
+            triggerBrowserDownload(blob, originalName);
+            showDownloadProgress(100, 'Saved successfully!');
+            return;
+          }
+          
+          const totalBytes = parseInt(contentLength, 10);
+          let receivedBytes = 0;
+          const reader = response.body.getReader();
+          const chunks = [];
+          
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            chunks.push(value);
+            receivedBytes += value.length;
+            const percent = Math.round((receivedBytes / totalBytes) * 100);
+            showDownloadProgress(percent, `Downloading: ${fmtSize(receivedBytes)} of ${fmtSize(totalBytes)}`);
+          }
+          
+          const blob = new Blob(chunks);
+          triggerBrowserDownload(blob, originalName);
+          showDownloadProgress(100, 'Saved successfully!');
+        } catch (err) {
+          showToast('❌', 'Download failed');
+          showDownloadProgress(0, 'Download failed: ' + err.message);
+          setTimeout(() => progressPanel.classList.add('hidden'), 4000);
+        }
+      }
+    }
+
+    function triggerBrowserDownload(blob, originalName) {
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = originalName;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      showToast('💾', 'File saved successfully!');
     }
 
     function fileEmoji(t) { return t === 'image' ? '🖼️' : t === 'video' ? '🎬' : t === 'doc' ? '📄' : '📁'; }
