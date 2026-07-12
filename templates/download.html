@@ -553,21 +553,21 @@
 
       <div class="download-grid">
         <!-- macOS -->
-        <a href="/static/downloads/MyCloud-macOS.zip" class="dl-card mac" download>
+        <a href="https://github.com/vishnu-vikas-5/my-cloud/releases/download/v1.1.0/MyCloud-macOS.dmg" class="dl-card mac">
           <div>
             <div class="dl-icon"></div>
             <div class="dl-platform">macOS App</div>
-            <div class="dl-meta">Supports Intel & Apple Silicon</div>
+            <div class="dl-meta">Supports Intel & Apple Silicon (DMG)</div>
           </div>
           <button class="btn-dl" type="button">Download for Mac</button>
         </a>
 
         <!-- Windows -->
-        <a href="/static/downloads/MyCloud-Windows.exe" class="dl-card win" download>
+        <a href="https://github.com/vishnu-vikas-5/my-cloud/releases/download/v1.1.0/MyCloud-Windows.exe" class="dl-card win">
           <div>
             <div class="dl-icon">❖</div>
             <div class="dl-platform">Windows App</div>
-            <div class="dl-meta">Supports Windows 10 & 11</div>
+            <div class="dl-meta">Supports Windows 10 & 11 (EXE)</div>
           </div>
           <button class="btn-dl" type="button">Download for Windows</button>
         </a>
@@ -612,19 +612,16 @@
           <div class="acc-content">
             <p>Follow these steps to configure and install MyCloud on your Mac:</p>
             <ol class="steps-list">
-              <li>Download the <code class="code-badge">MyCloud-macOS.zip</code> file.</li>
-              <li>Double-click the zip to extract <code class="code-badge">MyCloud.app</code>.</li>
-              <li>Since the app is downloaded from a browser, macOS will quarantine it. To bypass this, open Terminal in
-                the folder and run:
-                <br /><code class="code-badge">xattr -cr MyCloud.app</code>
+              <li>Download the <code class="code-badge">MyCloud-macOS.dmg</code> installer disk image.</li>
+              <li>Double-click the DMG file to mount it, then drag <code class="code-badge">MyCloud.app</code> into your <b>Applications</b> folder.</li>
+              <li>Since the app is downloaded from a browser, macOS Gatekeeper may quarantine it. To bypass this, open Terminal and run:
+                <br /><code class="code-badge">xattr -cr /Applications/MyCloud.app</code>
               </li>
-              <li>Alternatively, right-click (Control-click) <code class="code-badge">MyCloud.app</code>, select
-                <b>Open</b>, and confirm. Or go to <b>System Settings > Privacy & Security</b> and click <b>Open
-                  Anyway</b>.</li>
+              <li>Alternatively, right-click (Control-click) the app inside your Applications folder, select
+                <b>Open</b>, and confirm. Or go to <b>System Settings > Privacy & Security</b> and click <b>Open Anyway</b>.</li>
               <li>The <b>MyCloud Setup Wizard</b> will open. Click <b>Browse</b> to select the folder where you want to
                 store your cloud backend files.</li>
-              <li>Click <b>Install & Complete Setup</b>. The app will automatically copy itself to your
-                <b>Applications</b> folder and launch.</li>
+              <li>Click <b>Install & Complete Setup</b>. The app will automatically set up the local backend database and launch.</li>
             </ol>
           </div>
         </div>
