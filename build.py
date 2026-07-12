@@ -2,6 +2,22 @@ import os
 import sys
 import shutil
 import subprocess
+import builtins
+
+
+def _safe_print(*args, **kwargs):
+    try:
+        builtins.print(*args, **kwargs)
+    except UnicodeEncodeError:
+        encoding = getattr(sys.stdout, 'encoding', None) or 'utf-8'
+        safe_args = [
+            str(arg).encode(encoding, errors='replace').decode(encoding, errors='replace')
+            for arg in args
+        ]
+        builtins.print(*safe_args, **kwargs)
+
+
+print = _safe_print
 
 def run_build():
     print("===========================================")
