@@ -195,24 +195,36 @@ def sync_databases():
                 sl_cur.execute("INSERT INTO admins (username, password) VALUES (?, ?)", (username, password))
         
         # 2. SYNC CLOUDS (Match on cloud name)
-        pg_cur.execute("SELECT name, password, storage_path, limit_gb, created_at, admin_owner FROM clouds")
+        pg_cur.execute("SELECT name, password, storage_path, limit_gb, created_at, admin_owner, tunnel_url FROM clouds")
         pg_clouds = {row['name']: row for row in pg_cur.fetchall()}
         
-        sl_cur.execute("SELECT name, password, storage_path, limit_gb, created_at, admin_owner FROM clouds")
+        sl_cur.execute("SELECT name, password, storage_path, limit_gb, created_at, admin_owner, tunnel_url FROM clouds")
         sl_clouds = {row['name']: row for row in sl_cur.fetchall()}
         
         for name, row in sl_clouds.items():
             if name not in pg_clouds:
                 pg_cur.execute(
-                    "INSERT INTO clouds (name, password, storage_path, limit_gb, created_at, admin_owner) VALUES (%s, %s, %s, %s, %s, %s)",
-                    (name, row['password'], row['storage_path'], row['limit_gb'], row['created_at'], row['admin_owner'])
+                    "INSERT INTO clouds (name, password, storage_path, limit_gb, created_at, admin_owner, tunnel_url) VALUES (%s, %s, %s, %s, %s, %s, %s)",
+                    (name, row['password'], row['storage_path'], row['limit_gb'], row['created_at'], row['admin_owner'], row['tunnel_url'])
                 )
+            else:
+                if row['tunnel_url'] and row['tunnel_url'] != pg_clouds[name]['tunnel_url']:
+                    pg_cur.execute(
+                        "UPDATE clouds SET tunnel_url = %s WHERE name = %s",
+                        (row['tunnel_url'], name)
+                    )
         for name, row in pg_clouds.items():
             if name not in sl_clouds:
                 sl_cur.execute(
-                    "INSERT INTO clouds (name, password, storage_path, limit_gb, created_at, admin_owner) VALUES (?, ?, ?, ?, ?, ?)",
-                    (row['name'], row['password'], row['storage_path'], row['limit_gb'], row['created_at'], row['admin_owner'])
+                    "INSERT INTO clouds (name, password, storage_path, limit_gb, created_at, admin_owner, tunnel_url) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                    (row['name'], row['password'], row['storage_path'], row['limit_gb'], row['created_at'], row['admin_owner'], row['tunnel_url'])
                 )
+            else:
+                if row['tunnel_url'] and row['tunnel_url'] != sl_clouds[name]['tunnel_url']:
+                    sl_cur.execute(
+                        "UPDATE clouds SET tunnel_url = ? WHERE name = ?",
+                        (row['tunnel_url'], name)
+                    )
         
         # 3. SYNC USERS (Match on username)
         pg_cur.execute("SELECT username, password, connected_cloud, joined_at FROM users")
@@ -386,6 +398,10 @@ def init_db():
     conn.commit()
     conn.close()
 
+@app.route('/api/ping')
+def ping():
+    return jsonify({'status': 'ok'})
+
 import sys
 import getpass
 
@@ -440,12 +456,21 @@ def list_usb_drives():
                     pass
     return drives
 
-def is_cloud_online(storage_path):
+def is_cloud_online(storage_path, tunnel_url=None):
     if os.path.exists(storage_path):
         return os.access(storage_path, os.W_OK)
     parent = os.path.dirname(storage_path)
     if os.path.exists(parent):
         return os.access(parent, os.W_OK)
+        
+    if tunnel_url:
+        import requests
+        try:
+            r = requests.get(tunnel_url.rstrip('/') + '/api/ping', timeout=1.2)
+            if r.status_code == 200:
+                return True
+        except:
+            pass
     return False
 
 def hash_pass(password):
@@ -591,10 +616,10 @@ def get_cloud_storage_path(conn, cloud_name):
     return cloud['storage_path'] if cloud else None
 
 def get_user_vault_path(conn, cloud_name, username):
-    cloud_path = get_cloud_storage_path(conn, cloud_name)
-    if not cloud_path or not is_cloud_online(cloud_path):
+    cloud = conn.execute("SELECT storage_path, tunnel_url FROM clouds WHERE name=?", (cloud_name,)).fetchone()
+    if not cloud or not is_cloud_online(cloud['storage_path'], cloud['tunnel_url']):
         return None
-    vault_path = os.path.join(cloud_path, secure_filename(username or 'user'))
+    vault_path = os.path.join(cloud['storage_path'], secure_filename(username or 'user'))
     try:
         os.makedirs(vault_path, exist_ok=True)
     except:
@@ -762,13 +787,13 @@ def search_clouds():
         return jsonify([])
     conn = get_db()
     clouds = conn.execute(
-        "SELECT name, limit_gb, created_at, storage_path FROM clouds WHERE LOWER(name) LIKE ?",
+        "SELECT name, limit_gb, created_at, storage_path, tunnel_url FROM clouds WHERE LOWER(name) LIKE ?",
         (f'%{q}%',)
     ).fetchall()
     result = []
     for c in clouds:
         files = conn.execute("SELECT COUNT(*) AS count, SUM(size) AS sum FROM files WHERE cloud_name=?", (c['name'],)).fetchone()
-        online = is_cloud_online(c['storage_path'])
+        online = is_cloud_online(c['storage_path'], c['tunnel_url'])
         result.append({
             'name': c['name'],
             'limit_gb': c['limit_gb'],
@@ -832,7 +857,7 @@ def upload_file():
         return jsonify({'error': 'Cloud not found'}), 404
 
     # Check if the cloud is online (USB drive is plugged in)
-    if not is_cloud_online(cloud['storage_path']):
+    if not is_cloud_online(cloud['storage_path'], cloud['tunnel_url']):
         conn.close()
         return jsonify({'success': False, 'message': 'Cloud storage is offline (USB drive unplugged by admin)'}), 400
 
@@ -898,7 +923,7 @@ def user_storage_stats():
         conn.close()
         return jsonify({'error': 'Cloud not found'}), 404
 
-    online = is_cloud_online(cloud['storage_path'])
+    online = is_cloud_online(cloud['storage_path'], cloud['tunnel_url'])
     cloud_used = conn.execute("SELECT SUM(size) AS sum FROM files WHERE cloud_name=?", (cloud_name,)).fetchone()['sum'] or 0
     user_used = conn.execute("SELECT SUM(size) AS sum FROM files WHERE cloud_name=? AND uploaded_by=?", (cloud_name, session['user'])).fetchone()['sum'] or 0
     cloud_file_count = conn.execute("SELECT COUNT(*) AS count FROM files WHERE cloud_name=?", (cloud_name,)).fetchone()['count'] or 0
@@ -922,10 +947,11 @@ def delete_file(file_id):
     conn = get_db()
     f = conn.execute("SELECT * FROM files WHERE id=? AND uploaded_by=?", (file_id, session['user'])).fetchone()
     if f:
-        cloud_path = get_cloud_storage_path(conn, f['cloud_name'])
-        if not cloud_path or not is_cloud_online(cloud_path):
+        cloud = conn.execute("SELECT storage_path, tunnel_url FROM clouds WHERE name=?", (f['cloud_name'],)).fetchone()
+        if not cloud or not is_cloud_online(cloud['storage_path'], cloud['tunnel_url']):
             conn.close()
             return jsonify({'error': 'Cloud storage is offline (USB drive unplugged by admin)'}), 400
+        cloud_path = cloud['storage_path']
         try:
             vault_path = os.path.join(cloud_path, secure_filename(session['user'] or 'user'))
             os.remove(os.path.join(vault_path, f['filename']))
@@ -945,12 +971,12 @@ def download_file(file_id):
     if not f:
         conn.close()
         return jsonify({'error': 'File not found'}), 404
-    cloud = conn.execute("SELECT storage_path FROM clouds WHERE name=?", (f['cloud_name'],)).fetchone()
+    cloud = conn.execute("SELECT storage_path, tunnel_url FROM clouds WHERE name=?", (f['cloud_name'],)).fetchone()
     conn.close()
     if not cloud:
         return jsonify({'error': 'Cloud not found'}), 404
 
-    if not is_cloud_online(cloud['storage_path']):
+    if not is_cloud_online(cloud['storage_path'], cloud.get('tunnel_url')):
         # Fallback: check if we have a remote tunnel_url active
         conn = get_db()
         c_row = conn.execute("SELECT tunnel_url FROM clouds WHERE name=?", (f['cloud_name'],)).fetchone()
@@ -995,12 +1021,12 @@ def preview_file(file_id):
     if not f:
         conn.close()
         return jsonify({'error': 'File not found'}), 404
-    cloud = conn.execute("SELECT storage_path FROM clouds WHERE name=?", (f['cloud_name'],)).fetchone()
+    cloud = conn.execute("SELECT storage_path, tunnel_url FROM clouds WHERE name=?", (f['cloud_name'],)).fetchone()
     conn.close()
     if not cloud:
         return jsonify({'error': 'Cloud not found'}), 404
 
-    if not is_cloud_online(cloud['storage_path']):
+    if not is_cloud_online(cloud['storage_path'], cloud.get('tunnel_url')):
         # Fallback: check if we have a remote tunnel_url active
         conn = get_db()
         c_row = conn.execute("SELECT tunnel_url FROM clouds WHERE name=?", (f['cloud_name'],)).fetchone()
@@ -1181,6 +1207,17 @@ def start_cloudflare_tunnel(port=5001):
                 if match:
                     tunnel_url = match.group(0)
                     print(f"Cloudflare Tunnel URL: {tunnel_url}")
+                    try:
+                        conn = get_db()
+                        clouds = conn.execute("SELECT name, storage_path FROM clouds").fetchall()
+                        for c in clouds:
+                            if os.path.exists(c['storage_path']):
+                                conn.execute("UPDATE clouds SET tunnel_url = ? WHERE name = ?", (tunnel_url, c['name']))
+                        conn.commit()
+                        conn.close()
+                        print(f"Updated database: associated local clouds with active tunnel {tunnel_url}")
+                    except Exception as db_err:
+                        print(f"Error updating cloud tunnel URLs: {db_err}")
             tunnel_process.stdout.close()
             tunnel_process.wait()
         except Exception as e:
@@ -1294,7 +1331,7 @@ class DesktopApi:
                 conn.close()
                 return {"success": False, "message": "File record not found in database"}
             
-            cloud = conn.execute("SELECT storage_path FROM clouds WHERE name=?", (f['cloud_name'],)).fetchone()
+            cloud = conn.execute("SELECT storage_path, tunnel_url FROM clouds WHERE name=?", (f['cloud_name'],)).fetchone()
             conn.close()
             
             if not cloud:
@@ -1328,7 +1365,7 @@ class DesktopApi:
             webview.active_window().evaluate_js(f"showDownloadProgress(0, 'Starting download: {f['original_name']}')")
             
             # Check if file is available locally
-            if is_cloud_online(cloud['storage_path']) and os.path.exists(src_path):
+            if is_cloud_online(cloud['storage_path'], cloud['tunnel_url']) and os.path.exists(src_path):
                 # Local copy with chunked progress reporting
                 with open(src_path, 'rb') as fsrc:
                     with open(save_path, 'wb') as fdst:
