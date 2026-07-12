@@ -389,9 +389,14 @@ def init_db():
         uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )''')
 
-    # Migration: Add admin_owner to clouds if not exists
+    # Migration: Add admin_owner and tunnel_url to clouds if not exists
     try:
         c.execute("ALTER TABLE clouds ADD COLUMN IF NOT EXISTS admin_owner TEXT DEFAULT 'admin'")
+    except:
+        conn.rollback()
+
+    try:
+        c.execute("ALTER TABLE clouds ADD COLUMN IF NOT EXISTS tunnel_url TEXT DEFAULT NULL")
     except:
         conn.rollback()
 
