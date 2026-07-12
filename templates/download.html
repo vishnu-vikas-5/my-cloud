@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Download MyCloud Desktop - Private Local Cloud Storage</title>
+  <link rel="icon" type="image/png" href="{{ url_for('static', filename='favicon.png') }}" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500&display=swap"
+    rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #050a14;
+      --bg-2: #0a1220;
+      --surface: rgba(10, 18, 32, 0.75);
+      --surface-border: rgba(255, 255, 255, 0.08);
+      --text: #eef6ff;
+      --text-soft: rgba(236, 244, 255, 0.85);
+      --muted: #8fa8c9;
+      --accent: #B497CF;
+      --accent-2: #7c9dff;
+      --accent-3: #c084fc;
+      --radius: 24px;
+      --font: "Outfit", system-ui, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--font);
+      color: var(--text);
+      min-height: 100vh;
+      background: var(--bg);
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    /* Aurora background effects */
+    .aurora {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      overflow: hidden;
+    }
+
+    .aurora::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 70% 50% at 20% -10%, rgba(180, 151, 207, 0.15), transparent 60%),
+        radial-gradient(ellipse 60% 45% at 80% 15%, rgba(124, 157, 255, 0.15), transparent 60%),
+        radial-gradient(ellipse 50% 40% at 50% 100%, rgba(192, 132, 252, 0.1), transparent 50%),
+        linear-gradient(180deg, var(--bg) 0%, var(--bg-2) 100%);
+    }
+
+    .glowing-orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(120px);
+      opacity: 0.18;
+      mix-blend-mode: screen;
+      pointer-events: none;
+      animation: float-orb 28s infinite alternate ease-in-out;
+    }
+    .orb-1 {
+      width: 50vw;
+      height: 50vw;
+      background: radial-gradient(circle, rgba(180, 151, 207, 1) 0%, rgba(180, 151, 207, 0) 70%);
+      top: -10%;
+      left: -10%;
+      animation-duration: 32s;
+    }
+    .orb-2 {
+      width: 45vw;
+      height: 45vw;
+      background: radial-gradient(circle, rgba(124, 157, 255, 1) 0%, rgba(124, 157, 255, 0) 70%);
+      top: 15%;
+      right: -10%;
+      animation-duration: 36s;
+      animation-delay: -6s;
+    }
+    .orb-3 {
+      width: 40vw;
+      height: 40vw;
+      background: radial-gradient(circle, rgba(192, 132, 252, 1) 0%, rgba(192, 132, 252, 0) 70%);
+      bottom: -10%;
+      left: 30%;
+      animation-duration: 26s;
+      animation-delay: -12s;
+    }
+
+    @keyframes float-orb {
+      0% {
+        transform: translate(0, 0) scale(1);
+      }
+      50% {
+        transform: translate(8vw, 6vh) scale(1.15);
+      }
+      100% {
+        transform: translate(-5vw, -8vh) scale(0.9);
+      }
+    }
+
+    /* Grid overlay */
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 1;
+      background-image:
+        linear-gradient(rgba(148, 163, 184, 0.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(148, 163, 184, 0.02) 1px, transparent 1px);
+      background-size: 48px 48px;
+      mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(0, 0, 0, 0.8), transparent 70%);
+    }
+
+    header,
+    main,
+    footer {
+      position: relative;
+      z-index: 2;
+    }
+
+    /* Header / Floating Navigation */
+    .nav-container {
+      max-width: 1100px;
+      margin: 1.5rem auto;
+      padding: 0 1.25rem;
+    }
+
+    .navbar {
+      background: var(--surface);
+      border: 1px solid var(--surface-border);
+      border-radius: 999px;
+      padding: 10px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      backdrop-filter: blur(20px);
+      box-shadow: 0 16px 36px rgba(2, 8, 23, 0.25);
+    }
+
+    .logo-block {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+    }
+
+    .logo-mark {
+      width: 32px;
+      height: 32px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2), var(--accent-3));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      box-shadow: 0 8px 20px rgba(180, 151, 207, 0.25);
+    }
+
+    .logo-text {
+      font-weight: 800;
+      font-size: 16px;
+      color: var(--text);
+      letter-spacing: -0.02em;
+    }
+
+    .nav-btn {
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--accent);
+      padding: 8px 18px;
+      border-radius: 999px;
+      border: 1px solid rgba(180, 151, 207, 0.18);
+      background: rgba(180, 151, 207, 0.06);
+      transition: all 0.25s ease;
+    }
+
+    .nav-btn:hover {
+      background: var(--accent);
+      color: #04201d;
+      box-shadow: 0 8px 24px rgba(180, 151, 207, 0.25);
+      transform: translateY(-1px);
+    }
+
+    /* Hero Section */
+    .hero {
+      max-width: 1000px;
+      margin: 4.5rem auto 3rem;
+      padding: 0 1.5rem;
+      text-align: center;
+    }
+
+    .kicker {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-soft);
+      margin-bottom: 1.5rem;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+    }
+
+    .title {
+      font-size: clamp(36px, 6vw, 68px);
+      line-height: 1.05;
+      letter-spacing: -0.04em;
+      font-weight: 900;
+      margin-bottom: 1.5rem;
+    }
+
+    .gradient-text {
+      background: linear-gradient(135deg, #fff 0%, var(--accent) 35%, var(--accent-2) 70%, var(--accent-3) 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+
+    .description {
+      font-size: clamp(15px, 2.5vw, 18px);
+      color: var(--muted);
+      max-width: 60ch;
+      margin: 0 auto 2.5rem;
+      line-height: 1.6;
+    }
+
+    /* Download Buttons Grid */
+    .download-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 20px;
+      max-width: 640px;
+      margin: 0 auto;
+      padding: 0 1rem;
+    }
+
+    .dl-card {
+      background: var(--surface);
+      border: 1px solid var(--surface-border);
+      border-radius: var(--radius);
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      text-decoration: none;
+      transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+      box-shadow: 0 14px 30px rgba(0, 0, 0, 0.15);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .dl-card::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.06), transparent 40%);
+      pointer-events: none;
+    }
+
+    .dl-card:hover {
+      transform: translateY(-4px);
+      border-color: rgba(255, 255, 255, 0.18);
+      box-shadow: 0 24px 48px rgba(2, 8, 23, 0.35);
+    }
+
+    .dl-card.mac:hover {
+      box-shadow: 0 20px 40px rgba(124, 157, 255, 0.12), 0 24px 48px rgba(2, 8, 23, 0.35);
+    }
+
+    .dl-card.win:hover {
+      box-shadow: 0 20px 40px rgba(180, 151, 207, 0.1), 0 24px 48px rgba(2, 8, 23, 0.35);
+    }
+
+    .dl-icon {
+      font-size: 38px;
+      margin-bottom: 12px;
+    }
+
+    .dl-platform {
+      font-size: 18px;
+      font-weight: 800;
+      color: var(--text);
+      margin-bottom: 4px;
+    }
+
+    .dl-meta {
+      font-size: 11px;
+      color: var(--muted);
+      margin-bottom: 20px;
+    }
+
+    .btn-dl {
+      width: 100%;
+      padding: 12px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 700;
+      text-align: center;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.03));
+      color: #fff;
+      transition: all 0.25s ease;
+    }
+
+    .dl-card.mac .btn-dl {
+      background: linear-gradient(135deg, #3b82f6, #6366f1);
+      border-color: rgba(255, 255, 255, 0.15);
+    }
+
+    .dl-card.win .btn-dl {
+      background: linear-gradient(135deg, #0f766e, #14b8a6);
+      border-color: rgba(255, 255, 255, 0.15);
+    }
+
+    .dl-card:hover .btn-dl {
+      transform: scale(1.02);
+      filter: brightness(1.1);
+    }
+
+    /* Features list */
+    .features-section {
+      max-width: 1000px;
+      margin: 6rem auto 3rem;
+      padding: 0 1.5rem;
+    }
+
+    .section-title {
+      text-align: center;
+      font-size: clamp(24px, 4vw, 36px);
+      font-weight: 800;
+      margin-bottom: 3rem;
+      letter-spacing: -0.03em;
+    }
+
+    .grid-features {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+    }
+
+    .feat-card {
+      background: var(--surface);
+      border: 1px solid var(--surface-border);
+      border-radius: var(--radius);
+      padding: 28px;
+      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.15);
+      transition: all 0.25s ease;
+    }
+
+    .feat-card:hover {
+      border-color: rgba(180, 151, 207, 0.18);
+      transform: translateY(-2px);
+    }
+
+    .feat-badge {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      margin-bottom: 16px;
+    }
+
+    .feat-badge.blue {
+      background: rgba(124, 157, 255, 0.1);
+      color: var(--accent-2);
+      border: 1px solid rgba(124, 157, 255, 0.18);
+    }
+
+    .feat-badge.cyan {
+      background: rgba(180, 151, 207, 0.1);
+      color: var(--accent);
+      border: 1px solid rgba(180, 151, 207, 0.18);
+    }
+
+    .feat-badge.purple {
+      background: rgba(192, 132, 252, 0.1);
+      color: var(--accent-3);
+      border: 1px solid rgba(192, 132, 252, 0.18);
+    }
+
+    .feat-title {
+      font-size: 16px;
+      font-weight: 800;
+      margin-bottom: 8px;
+    }
+
+    .feat-copy {
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    /* Installation Accordion */
+    .guide-section {
+      max-width: 720px;
+      margin: 5rem auto;
+      padding: 0 1.5rem;
+    }
+
+    .accordion {
+      margin-top: 2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .acc-item {
+      background: var(--surface);
+      border: 1px solid var(--surface-border);
+      border-radius: 18px;
+      overflow: hidden;
+    }
+
+    .acc-header {
+      width: 100%;
+      padding: 18px 24px;
+      background: none;
+      border: none;
+      text-align: left;
+      color: var(--text);
+      font-size: 15px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      outline: none;
+    }
+
+    .acc-arrow {
+      transition: transform 0.25s ease;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .acc-content {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.25s cubic-bezier(0, 1, 0, 1), padding 0.25s ease;
+      padding: 0 24px;
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.65;
+    }
+
+    .acc-item.active .acc-content {
+      max-height: 1000px;
+      padding-bottom: 20px;
+      transition: max-height 0.35s ease-in, padding 0.25s ease;
+    }
+
+    .acc-item.active .acc-arrow {
+      transform: rotate(180deg);
+    }
+
+    .steps-list {
+      margin-left: 18px;
+      margin-top: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .code-badge {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      font-family: Consolas, monospace;
+      padding: 2px 6px;
+      border-radius: 6px;
+      color: var(--accent);
+    }
+
+    /* Footer */
+    footer {
+      border-top: 1px solid var(--surface-border);
+      padding: 2.5rem 0;
+      text-align: center;
+      margin-top: 8rem;
+      background: rgba(4, 8, 16, 0.4);
+    }
+
+    .footer-copy {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    /* Responsive Design */
+    @media (max-width: 820px) {
+      .grid-features {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 580px) {
+      .download-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .hero {
+        margin-top: 3rem;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="aurora" aria-hidden="true">
+    <div class="glowing-orb orb-1"></div>
+    <div class="glowing-orb orb-2"></div>
+    <div class="glowing-orb orb-3"></div>
+  </div>
+
+  <header class="nav-container">
+    <div class="navbar">
+      <a href="/" class="logo-block">
+        <div class="logo-mark">☁️</div>
+        <span class="logo-text">MyCloud Portal</span>
+      </a>
+      <a href="/dashboard" class="nav-btn">Launch Web app</a>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="kicker">📦 Desktop App Release · v1.1.0</div>
+      <h1 class="title">MyCloud for <br /><span class="gradient-text">your desktop.</span></h1>
+      <p class="description">
+        Run your own private cloud server without terminal scripts. Wrap MyCloud inside a premium native app, choose
+        your USB drive, and manage your private vault with ease.
+      </p>
+
+      <div class="download-grid">
+        <!-- macOS -->
+        <a href="/static/downloads/MyCloud-macOS.zip" class="dl-card mac" download>
+          <div>
+            <div class="dl-icon"></div>
+            <div class="dl-platform">macOS App</div>
+            <div class="dl-meta">Supports Intel & Apple Silicon</div>
+          </div>
+          <button class="btn-dl" type="button">Download for Mac</button>
+        </a>
+
+        <!-- Windows -->
+        <a href="/static/downloads/MyCloud-Windows.exe" class="dl-card win" download>
+          <div>
+            <div class="dl-icon">❖</div>
+            <div class="dl-platform">Windows App</div>
+            <div class="dl-meta">Supports Windows 10 & 11</div>
+          </div>
+          <button class="btn-dl" type="button">Download for Windows</button>
+        </a>
+      </div>
+    </section>
+
+    <section class="features-section">
+      <h2 class="section-title">Standalone App Features</h2>
+      <div class="grid-features">
+        <div class="feat-card">
+          <div class="feat-badge blue">🔌</div>
+          <h3 class="feat-title">Zero Configuration</h3>
+          <p class="feat-copy">No need to install Python, Flask, or configure dependencies on your client's machine.
+            Double-click to launch.</p>
+        </div>
+        <div class="feat-card">
+          <div class="feat-badge cyan">💾</div>
+          <h3 class="feat-title">USB Native Access</h3>
+          <p class="feat-copy">Select any plugged-in external hard disk or USB pen drive to host the files directly,
+            keeping them separated from your system files.</p>
+        </div>
+        <div class="feat-card">
+          <div class="feat-badge purple">🖥️</div>
+          <h3 class="feat-title">Window Interface</h3>
+          <p class="feat-copy">Runs in a dedicated frame-less app window, exactly like WhatsApp or Slack. Avoid browser
+            tabs and URLs.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="guide-section">
+      <h2 class="section-title" style="margin-bottom: 1.5rem;">How to Install</h2>
+      <p style="text-align: center; color: var(--muted); font-size: 13px; margin-bottom: 2rem;">Follow these quick
+        guides to launch MyCloud on your machine.</p>
+
+      <div class="accordion">
+        <div class="acc-item">
+          <button class="acc-header" onclick="toggleAcc(this)">
+            <span> Installing on macOS</span>
+            <span class="acc-arrow">▼</span>
+          </button>
+          <div class="acc-content">
+            <p>Follow these steps to configure and install MyCloud on your Mac:</p>
+            <ol class="steps-list">
+              <li>Download the <code class="code-badge">MyCloud-macOS.zip</code> file.</li>
+              <li>Double-click the zip to extract <code class="code-badge">MyCloud.app</code>.</li>
+              <li>Since the app is downloaded from a browser, macOS will quarantine it. To bypass this, open Terminal in
+                the folder and run:
+                <br /><code class="code-badge">xattr -cr MyCloud.app</code>
+              </li>
+              <li>Alternatively, right-click (Control-click) <code class="code-badge">MyCloud.app</code>, select
+                <b>Open</b>, and confirm. Or go to <b>System Settings > Privacy & Security</b> and click <b>Open
+                  Anyway</b>.</li>
+              <li>The <b>MyCloud Setup Wizard</b> will open. Click <b>Browse</b> to select the folder where you want to
+                store your cloud backend files.</li>
+              <li>Click <b>Install & Complete Setup</b>. The app will automatically copy itself to your
+                <b>Applications</b> folder and launch.</li>
+            </ol>
+          </div>
+        </div>
+
+        <div class="acc-item">
+          <button class="acc-header" onclick="toggleAcc(this)">
+            <span>❖ Installing on Windows</span>
+            <span class="acc-arrow">▼</span>
+          </button>
+          <div class="acc-content">
+            <p>Follow these steps to install the executable on Windows:</p>
+            <ol class="steps-list">
+              <li>Download the <code class="code-badge">MyCloud-Windows.exe</code> file.</li>
+              <li><strong>Note on Windows Defender:</strong> Because this is an independent application, Windows
+                Defender may incorrectly flag it as a virus (False Positive) and block the download. To fix this:
+                <ul
+                  style="margin-top: 0.5rem; list-style-type: disc; padding-left: 1.5rem; color: var(--muted); font-size: 14px;">
+                  <li>If your browser blocks it, go to your Downloads list (Ctrl+J) and select <b>Keep dangerous
+                      file</b>.</li>
+                  <li>If Windows Defender deletes it, open <b>Windows Security</b> &gt; <b>Virus & threat protection</b>
+                    &gt; <b>Protection history</b>, find the blocked file, and select <b>Allow on device</b> or
+                    <b>Restore</b>.</li>
+                </ul>
+              </li>
+              <li>Double-click the file to launch the installer.</li>
+              <li>If Windows SmartScreen displays a blue warning, click <b>More Info</b>, then click <b>Run Anyway</b>.
+              </li>
+              <li>The <b>MyCloud Setup Wizard</b> will open. Select where you want to store your cloud backend files.
+              </li>
+              <li>Click <b>Install & Complete Setup</b>. The app will copy itself to your Programs directory and add a
+                shortcut to your <b>Start Menu / App Menu</b> (like WhatsApp). You can launch it from your Start Menu
+                anytime!</li>
+            </ol>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <p class="footer-copy">&copy; 2026 MyCloud Inc. All rights reserved. Self-hosted local private cloud engine.</p>
+  </footer>
+
+  <script>
+    function toggleAcc(btn) {
+      const item = btn.parentElement;
+      const isActive = item.classList.contains('active');
+
+      // Close all other items
+      document.querySelectorAll('.acc-item').forEach(x => {
+        x.classList.remove('active');
+      });
+
+      if (!isActive) {
+        item.classList.add('active');
+      }
+    }
+  </script>
+</body>
+
+</html>

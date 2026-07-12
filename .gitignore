@@ -1,0 +1,27 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# PyInstaller build files
+build/
+dist/
+*.spec
+
+# Local SQLite databases
+*.db
+*.sqlite
+mycloud.db
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Local tunnel clients
+cloudflared
+cloudflared.exe

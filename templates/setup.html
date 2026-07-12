@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>MyCloud Server Setup Wizard</title>
+<link rel="icon" type="image/png" href="{{ url_for('static', filename='favicon.png') }}" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg: #050a14;
+    --bg-2: #0a1220;
+    --surface: rgba(10, 18, 32, 0.75);
+    --surface-border: rgba(255, 255, 255, 0.08);
+    --text: #eef6ff;
+    --text-soft: rgba(236, 244, 255, 0.85);
+    --muted: #8fa8c9;
+    --accent: #B497CF;
+    --accent-2: #7c9dff;
+    --accent-3: #c084fc;
+    --radius: 20px;
+    --font: "Outfit", system-ui, sans-serif;
+  }
+
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  body {
+    font-family: var(--font);
+    color: var(--text);
+    background: var(--bg);
+    overflow: hidden;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+  }
+
+  /* Aurora background effects */
+  .aurora {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    overflow: hidden;
+  }
+  .aurora::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 60% 40% at 80% -10%, rgba(124, 157, 255, 0.15), transparent 50%),
+      radial-gradient(ellipse 50% 40% at 20% 100%, rgba(180, 151, 207, 0.12), transparent 50%),
+      linear-gradient(180deg, var(--bg) 0%, var(--bg-2) 100%);
+  }
+
+  .glowing-orb {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(120px);
+    opacity: 0.18;
+    mix-blend-mode: screen;
+    pointer-events: none;
+    animation: float-orb 28s infinite alternate ease-in-out;
+  }
+  .orb-1 {
+    width: 50vw;
+    height: 50vw;
+    background: radial-gradient(circle, rgba(180, 151, 207, 1) 0%, rgba(180, 151, 207, 0) 70%);
+    top: -10%;
+    left: -10%;
+    animation-duration: 32s;
+  }
+  .orb-2 {
+    width: 45vw;
+    height: 45vw;
+    background: radial-gradient(circle, rgba(124, 157, 255, 1) 0%, rgba(124, 157, 255, 0) 70%);
+    top: 15%;
+    right: -10%;
+    animation-duration: 36s;
+    animation-delay: -6s;
+  }
+  .orb-3 {
+    width: 40vw;
+    height: 40vw;
+    background: radial-gradient(circle, rgba(192, 132, 252, 1) 0%, rgba(192, 132, 252, 0) 70%);
+    bottom: -10%;
+    left: 30%;
+    animation-duration: 26s;
+    animation-delay: -12s;
+  }
+
+  @keyframes float-orb {
+    0% {
+      transform: translate(0, 0) scale(1);
+    }
+    50% {
+      transform: translate(8vw, 6vh) scale(1.15);
+    }
+    100% {
+      transform: translate(-5vw, -8vh) scale(0.9);
+    }
+  }
+
+  .setup-container {
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    max-width: 600px;
+    padding: 24px;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--surface-border);
+    border-radius: var(--radius);
+    padding: 32px;
+    backdrop-filter: blur(20px);
+    box-shadow: 0 24px 64px rgba(2, 8, 23, 0.4);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .logo-block {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+
+  .logo-mark {
+    width: 38px;
+    height: 38px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2), var(--accent-3));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    box-shadow: 0 8px 20px rgba(180, 151, 207, 0.25);
+  }
+
+  .logo-text {
+    font-weight: 800;
+    font-size: 20px;
+    color: var(--text);
+    letter-spacing: -0.02em;
+  }
+
+  h1 {
+    font-size: 24px;
+    font-weight: 800;
+    margin-bottom: 8px;
+    letter-spacing: -0.03em;
+  }
+
+  .subtitle {
+    font-size: 14px;
+    color: var(--muted);
+    margin-bottom: 24px;
+    line-height: 1.5;
+  }
+
+  label {
+    display: block;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--accent-2);
+    margin-bottom: 8px;
+  }
+
+  .input-group {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+
+  input[type="text"] {
+    flex: 1;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    padding: 12px 16px;
+    color: var(--text);
+    font-family: inherit;
+    font-size: 14px;
+    outline: none;
+    transition: all 0.2s ease;
+  }
+
+  input[type="text"]:focus {
+    border-color: var(--accent);
+    background: rgba(255, 255, 255, 0.08);
+    box-shadow: 0 0 12px rgba(180, 151, 207, 0.15);
+  }
+
+  .btn {
+    border: none;
+    border-radius: 12px;
+    padding: 12px 20px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  .btn-secondary {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    color: var(--text);
+  }
+
+  .btn-secondary:hover {
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  .btn-primary {
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    color: #04201d;
+    width: 100%;
+    margin-top: 16px;
+    box-shadow: 0 8px 24px rgba(180, 151, 207, 0.25);
+  }
+
+  .btn-primary:hover {
+    filter: brightness(1.1);
+    transform: translateY(-1px);
+    box-shadow: 0 12px 28px rgba(180, 151, 207, 0.35);
+  }
+
+  .btn-primary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+  }
+
+  .checkbox-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 24px;
+    cursor: pointer;
+  }
+
+  .checkbox-group input {
+    width: 16px;
+    height: 16px;
+    accent-color: var(--accent);
+    cursor: pointer;
+  }
+
+  .checkbox-group span {
+    font-size: 13px;
+    color: var(--text-soft);
+  }
+
+  .loader-view {
+    display: none;
+    text-align: center;
+    padding: 20px 0;
+  }
+
+  .spinner {
+    width: 48px;
+    height: 48px;
+    border: 4px solid rgba(180, 151, 207, 0.1);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 20px;
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+
+  .status-text {
+    font-size: 14px;
+    color: var(--muted);
+    font-family: "JetBrains Mono", monospace;
+  }
+
+  .error-box {
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    border-radius: 12px;
+    padding: 12px 16px;
+    color: #fca5a5;
+    font-size: 13px;
+    margin-top: 16px;
+    display: none;
+  }
+</style>
+</head>
+<body>
+
+<div class="aurora" aria-hidden="true">
+  <div class="glowing-orb orb-1"></div>
+  <div class="glowing-orb orb-2"></div>
+  <div class="glowing-orb orb-3"></div>
+</div>
+
+<div class="setup-container">
+  <div class="card">
+    <a href="/" class="logo-block" style="text-decoration: none; color: inherit; display: inline-flex;">
+      <div class="logo-mark">☁️</div>
+      <span class="logo-text">MyCloud</span>
+    </a>
+
+    <div id="setup-form-view">
+      <h1>MyCloud Desktop Setup</h1>
+      <p class="subtitle">Specify where you would like to store files for your private cloud database. This could be a local directory or your USB drive.</p>
+
+      <label for="storage-path">Cloud Storage Folder</label>
+      <div class="input-group">
+        <input type="text" id="storage-path" readonly placeholder="Click Browse to select folder..." />
+        <button class="btn btn-secondary" onclick="browseFolder()">Browse...</button>
+      </div>
+
+      <div class="checkbox-group" onclick="toggleCheckbox()">
+        <input type="checkbox" id="create-shortcut" checked onclick="event.stopPropagation()" />
+        <span>Add to Applications Menu / Start Menu</span>
+      </div>
+
+      <div class="error-box" id="error-message"></div>
+
+      <button class="btn btn-primary" id="install-btn" disabled onclick="startInstallation()">Install & Complete Setup</button>
+    </div>
+
+    <div id="setup-loader-view" class="loader-view">
+      <div class="spinner"></div>
+      <h2>Installing MyCloud Server...</h2>
+      <p class="status-text" id="loader-status">Copying application files...</p>
+    </div>
+  </div>
+</div>
+
+<script>
+  function browseFolder() {
+    if (window.pywebview && window.pywebview.api) {
+      window.pywebview.api.select_folder().then(function(path) {
+        if (path) {
+          document.getElementById('storage-path').value = path;
+          document.getElementById('install-btn').disabled = false;
+          hideError();
+        }
+      });
+    } else {
+      // Fallback for browser preview
+      const fakePath = "/Users/vishnuvikas/MyCloudStorage";
+      document.getElementById('storage-path').value = fakePath;
+      document.getElementById('install-btn').disabled = false;
+    }
+  }
+
+  function toggleCheckbox() {
+    const cb = document.getElementById('create-shortcut');
+    cb.checked = !cb.checked;
+  }
+
+  function showError(msg) {
+    const errBox = document.getElementById('error-message');
+    errBox.innerText = msg;
+    errBox.style.display = 'block';
+  }
+
+  function hideError() {
+    document.getElementById('error-message').style.display = 'none';
+  }
+
+  function startInstallation() {
+    const storagePath = document.getElementById('storage-path').value;
+    const createShortcut = document.getElementById('create-shortcut').checked;
+
+    if (!storagePath) {
+      showError("Please select a storage directory first.");
+      return;
+    }
+
+    // Switch view to loader
+    document.getElementById('setup-form-view').style.display = 'none';
+    document.getElementById('setup-loader-view').style.display = 'block';
+
+    const statusEl = document.getElementById('loader-status');
+    statusEl.innerText = "Copying files & creating shortcuts...";
+
+    if (window.pywebview && window.pywebview.api) {
+      window.pywebview.api.install_and_configure(storagePath, createShortcut).then(function(response) {
+        if (response.success) {
+          statusEl.innerText = "Setup completed successfully! Launching MyCloud...";
+          // The python backend will launch the new process and exit this wizard.
+        } else {
+          // Go back to form and show error
+          document.getElementById('setup-loader-view').style.display = 'none';
+          document.getElementById('setup-form-view').style.display = 'block';
+          showError("Installation error: " + response.message);
+        }
+      }).catch(function(err) {
+        document.getElementById('setup-loader-view').style.display = 'none';
+        document.getElementById('setup-form-view').style.display = 'block';
+        showError("Communication error: " + err);
+      });
+    } else {
+      // Fallback simulation for dev
+      setTimeout(function() {
+        statusEl.innerText = "Setup completed! Launching...";
+        setTimeout(function() {
+          alert("Simulation finished! (In production, the application restarts)");
+          document.getElementById('setup-loader-view').style.display = 'none';
+          document.getElementById('setup-form-view').style.display = 'block';
+        }, 1000);
+      }, 1500);
+    }
+  }
+</script>
+</body>
+</html>

@@ -1,0 +1,4379 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MyCloud</title>
+  <link rel="icon" type="image/png" href="{{ url_for('static', filename='favicon.png') }}" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500&display=swap"
+    rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #050a14;
+      --bg-2: #0a1220;
+      --surface: rgba(10, 18, 32, 0.45);
+      --surface-strong: rgba(255, 255, 255, .94);
+      --text: #eef6ff;
+      --text-soft: rgba(236, 244, 255, .84);
+      --muted: #8fa8c9;
+      --line: rgba(148, 163, 184, .14);
+      --shadow: 0 28px 90px rgba(2, 8, 23, .42);
+      --shadow-soft: 0 14px 36px rgba(2, 8, 23, .28);
+      --accent: #B497CF;
+      --accent-2: #7c9dff;
+      --accent-3: #c084fc;
+      --danger: #ff6b7a;
+      --radius: 24px;
+      --font: "Outfit", system-ui, sans-serif;
+      --mono: "JetBrains Mono", Consolas, monospace;
+      --chip-bg: rgba(180, 151, 207, 0.15);
+      --chip-text: #e8dff5;
+      --badge-green-bg: rgba(180, 151, 207, 0.15);
+      --badge-green-text: #e8dff5;
+      --badge-purple-bg: rgba(120, 166, 255, .12);
+      --badge-purple-text: #d5e4ff;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      font-family: var(--font);
+      color: var(--text);
+      min-height: 100vh;
+      background: var(--bg);
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    .aurora {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      overflow: hidden;
+    }
+
+    .aurora::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 70% 50% at 15% -10%, rgba(180, 151, 207, 0.28), transparent 60%),
+        radial-gradient(ellipse 65% 45% at 85% 15%, rgba(124, 157, 255, 0.28), transparent 60%),
+        radial-gradient(ellipse 50% 40% at 50% 100%, rgba(192, 132, 252, 0.2), transparent 50%),
+        linear-gradient(180deg, var(--bg) 0%, var(--bg-2) 100%);
+    }
+
+    .glowing-orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(120px);
+      opacity: 0.38;
+      mix-blend-mode: screen;
+      pointer-events: none;
+      animation: float-orb 28s infinite alternate ease-in-out;
+    }
+    .orb-1 {
+      width: 50vw;
+      height: 50vw;
+      background: radial-gradient(circle, rgba(180, 151, 207, 1) 0%, rgba(180, 151, 207, 0) 70%);
+      top: -10%;
+      left: -10%;
+      animation-duration: 32s;
+    }
+    .orb-2 {
+      width: 45vw;
+      height: 45vw;
+      background: radial-gradient(circle, rgba(124, 157, 255, 1) 0%, rgba(124, 157, 255, 0) 70%);
+      top: 15%;
+      right: -10%;
+      animation-duration: 36s;
+      animation-delay: -6s;
+    }
+    .orb-3 {
+      width: 40vw;
+      height: 40vw;
+      background: radial-gradient(circle, rgba(192, 132, 252, 1) 0%, rgba(192, 132, 252, 0) 70%);
+      bottom: -10%;
+      left: 30%;
+      animation-duration: 26s;
+      animation-delay: -12s;
+    }
+
+    @keyframes float-orb {
+      0% {
+        transform: translate(0, 0) scale(1);
+      }
+      50% {
+        transform: translate(8vw, 6vh) scale(1.15);
+      }
+      100% {
+        transform: translate(-5vw, -8vh) scale(0.9);
+      }
+    }
+
+    .bg-ring {
+      position: absolute;
+      border: 1px solid rgba(180, 151, 207, 0.12);
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 0;
+      animation: rotate-ring 40s linear infinite;
+    }
+    .ring-1 {
+      width: 400px;
+      height: 400px;
+      top: 15%;
+      left: 10%;
+      border-style: dashed;
+    }
+    .ring-2 {
+      width: 600px;
+      height: 600px;
+      bottom: 10%;
+      right: 5%;
+      border-width: 2px;
+      border-color: rgba(124, 157, 255, 0.08);
+    }
+    @keyframes rotate-ring {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    body::after {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 1;
+      opacity: .035;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 1;
+      background-image: linear-gradient(rgba(148, 163, 184, .03) 1px, transparent 1px), linear-gradient(90deg, rgba(148, 163, 184, .03) 1px, transparent 1px);
+      background-size: 48px 48px;
+      mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(0, 0, 0, .5), transparent 70%);
+      opacity: .6;
+    }
+
+    body>*:not(.aurora):not(#preview-modal):not([id$="-modal"]):not(#app-dock) {
+      position: relative;
+      z-index: 2;
+    }
+
+    ::-webkit-scrollbar {
+      width: 10px;
+      height: 10px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: rgba(148, 163, 184, .22);
+      border-radius: 999px;
+      border: 2px solid transparent;
+      background-clip: padding-box;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(180, 151, 207, .35);
+      border: 2px solid transparent;
+      background-clip: padding-box;
+    }
+
+    input,
+    button,
+    select {
+      font-family: inherit;
+      font-size: 14px;
+    }
+
+    input,
+    select {
+      width: 100%;
+      padding: 11px 13px;
+      border: 1px solid rgba(148, 163, 184, .22);
+      border-radius: 16px;
+      outline: none;
+      background: rgba(8, 15, 28, .58);
+      color: var(--text);
+      transition: border-color .15s ease, box-shadow .15s ease, transform .15s ease, background .15s ease;
+      backdrop-filter: blur(14px);
+    }
+
+    input::placeholder,
+    select::placeholder {
+      color: rgba(154, 176, 207, .72);
+    }
+
+    input:focus,
+    select:focus {
+      border-color: rgba(180, 151, 207, .58);
+      box-shadow: 0 0 0 4px rgba(180, 151, 207, .14);
+      background: rgba(11, 18, 33, .78);
+    }
+
+    .btn {
+      padding: 11px 20px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, .18);
+      background: linear-gradient(180deg, rgba(255, 255, 255, .22), rgba(255, 255, 255, .06));
+      color: #f8fbff;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: .012em;
+      transition: transform .28s cubic-bezier(.22, .61, .36, 1), box-shadow .35s cubic-bezier(.22, .61, .36, 1), background .35s ease, border-color .25s ease, filter .25s ease, color .25s ease, opacity .25s ease;
+      box-shadow: 0 1px 0 rgba(255, 255, 255, .18) inset, 0 -1px 0 rgba(0, 0, 0, .18) inset, 0 10px 26px rgba(2, 8, 23, .22);
+      backdrop-filter: blur(18px) saturate(1.2);
+      position: relative;
+      overflow: hidden;
+      /* Force strict overflow-clipping during GPU acceleration in Webkit */
+      -webkit-mask-image: -webkit-radial-gradient(white, black);
+      isolation: isolate;
+      transform: translateZ(0);
+      will-change: transform, box-shadow;
+    }
+
+    /* Soft radial glow that fades in under the cursor */
+    .btn::after {
+      content: "";
+      position: absolute;
+      inset: -1px;
+      border-radius: inherit;
+      background: radial-gradient(120% 120% at 50% 0%, rgba(255, 255, 255, .22), transparent 55%);
+      opacity: 0;
+      transition: opacity .35s ease;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* Sheen sweep */
+    .btn::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      border-radius: inherit;
+      background: linear-gradient(115deg, transparent 25%, rgba(255, 255, 255, .30) 50%, transparent 75%);
+      background-size: 220% 100%;
+      background-position: 200% 0;
+      transition: background-position .9s cubic-bezier(.22, .61, .36, 1), opacity .3s ease;
+      pointer-events: none;
+      z-index: 1;
+      mix-blend-mode: overlay;
+    }
+
+    .btn>* {
+      position: relative;
+      z-index: 2;
+    }
+
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 1px 0 rgba(255, 255, 255, .24) inset, 0 -1px 0 rgba(0, 0, 0, .22) inset, 0 24px 44px rgba(2, 8, 23, .34);
+      filter: saturate(1.1);
+    }
+
+    .btn:hover::before {
+      background-position: -100% 0;
+    }
+
+    .btn:hover::after {
+      opacity: 1;
+    }
+
+    .btn:focus-visible {
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(180, 151, 207, .38), 0 1px 0 rgba(255, 255, 255, .22) inset, 0 18px 36px rgba(2, 8, 23, .28);
+    }
+
+    .btn:active {
+      transform: translateY(0) scale(.97);
+      transition-duration: .08s;
+      box-shadow: 0 1px 0 rgba(255, 255, 255, .12) inset, 0 -1px 0 rgba(0, 0, 0, .22) inset, 0 6px 14px rgba(2, 8, 23, .22);
+    }
+
+    .btn-purple {
+      background: linear-gradient(135deg, #2563eb 0%, #7c3aed 55%, #c084fc 100%);
+      color: #fff;
+      border-color: rgba(255, 255, 255, .22);
+      box-shadow: 0 1px 0 rgba(255, 255, 255, .30) inset, 0 -1px 0 rgba(0, 0, 0, .22) inset, 0 18px 38px rgba(124, 58, 237, .42);
+    }
+
+    .btn-purple:hover {
+      background: linear-gradient(135deg, #1d4ed8 0%, #6d28d9 55%, #a855f7 100%);
+      box-shadow: 0 1px 0 rgba(255, 255, 255, .34) inset, 0 -1px 0 rgba(0, 0, 0, .24) inset, 0 28px 52px rgba(124, 58, 237, .58);
+    }
+
+    .btn-green {
+      background: linear-gradient(135deg, #7c3aed 0%, #B497CF 55%, #e0e7ff 100%);
+      color: #0f0524;
+      border-color: rgba(255, 255, 255, .22);
+      box-shadow: 0 1px 0 rgba(255, 255, 255, .34) inset, 0 -1px 0 rgba(0, 0, 0, .18) inset, 0 18px 38px rgba(124, 58, 237, .3);
+    }
+
+    .btn-green:hover {
+      background: linear-gradient(135deg, #6d28d9 0%, #a78bfa 55%, #c7d2fe 100%);
+      color: #fff;
+      box-shadow: 0 1px 0 rgba(255, 255, 255, .34) inset, 0 -1px 0 rgba(0, 0, 0, .24) inset, 0 28px 52px rgba(124, 58, 237, .42);
+    }
+
+    .btn-red {
+      color: #ffd5d9;
+      border-color: rgba(255, 107, 122, .32);
+      background: rgba(255, 107, 122, .14);
+    }
+
+    .btn-red:hover {
+      background: rgba(255, 107, 122, .24);
+      color: #fff;
+      border-color: rgba(255, 107, 122, .50);
+    }
+
+    .btn-sm {
+      padding: 7px 14px;
+      font-size: 12px;
+      border-radius: 999px;
+    }
+
+    /* Disabled state */
+    .btn:disabled,
+    .btn[aria-disabled="true"] {
+      cursor: not-allowed;
+      opacity: .6;
+      filter: saturate(.85);
+      transform: none !important;
+      box-shadow: 0 1px 0 rgba(255, 255, 255, .12) inset, 0 6px 14px rgba(2, 8, 23, .18);
+    }
+
+    .btn:disabled:hover::before,
+    .btn[aria-disabled="true"]:hover::before {
+      background-position: 200% 0;
+    }
+
+    .btn:disabled:hover::after,
+    .btn[aria-disabled="true"]:hover::after {
+      opacity: 0;
+    }
+
+    /* Loading state: .is-loading or [aria-busy="true"]
+     Label is replaced by a skeleton shimmer bar; spinner stays centered. */
+    .btn.is-loading,
+    .btn[aria-busy="true"] {
+      cursor: progress;
+      color: transparent !important;
+      pointer-events: none;
+      background: rgba(148, 163, 184, .18) !important;
+      border-color: rgba(148, 163, 184, .28) !important;
+      box-shadow: 0 1px 0 rgba(255, 255, 255, .10) inset, 0 6px 18px rgba(2, 8, 23, .22) !important;
+      filter: none;
+    }
+
+    .btn.is-loading>*,
+    .btn[aria-busy="true"]>* {
+      visibility: hidden;
+    }
+
+    /* Skeleton placeholder bar where the label was */
+    .btn.is-loading::before,
+    .btn[aria-busy="true"]::before {
+      content: "";
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: calc(100% - 56px);
+      min-width: 48px;
+      max-width: 180px;
+      height: 10px;
+      border-radius: 999px;
+      background: linear-gradient(90deg,
+          rgba(148, 163, 184, .28) 0%,
+          rgba(226, 232, 240, .65) 50%,
+          rgba(148, 163, 184, .28) 100%);
+      background-size: 200% 100%;
+      background-position: 200% 0;
+      animation: btnSkeleton 1.4s linear infinite;
+      opacity: 1;
+      z-index: 2;
+    }
+
+    .btn-sm.is-loading::before,
+    .btn-sm[aria-busy="true"]::before {
+      height: 8px;
+      max-width: 120px;
+    }
+
+    /* Centered spinner sits to the right of the skeleton bar */
+    .btn.is-loading::after,
+    .btn[aria-busy="true"]::after {
+      content: "";
+      position: absolute;
+      top: 50%;
+      right: 14px;
+      left: auto;
+      width: 14px;
+      height: 14px;
+      margin: -7px 0 0 0;
+      border-radius: 999px;
+      border: 2px solid currentColor;
+      border-top-color: transparent;
+      border-right-color: transparent;
+      color: #0b1220;
+      background: transparent;
+      opacity: .85;
+      animation: btnSpin .7s linear infinite;
+      z-index: 3;
+      transform: none;
+    }
+
+    body[data-theme="light"] .btn.is-loading,
+    body[data-theme="light"] .btn[aria-busy="true"] {
+      background: rgba(226, 232, 240, .85) !important;
+      border-color: rgba(15, 23, 42, .10) !important;
+      box-shadow: 0 1px 0 rgba(255, 255, 255, .9) inset, 0 6px 14px rgba(15, 23, 42, .08) !important;
+    }
+
+    body[data-theme="light"] .btn.is-loading::before,
+    body[data-theme="light"] .btn[aria-busy="true"]::before {
+      background: linear-gradient(90deg,
+          rgba(148, 163, 184, .35) 0%,
+          rgba(255, 255, 255, .95) 50%,
+          rgba(148, 163, 184, .35) 100%);
+      background-size: 200% 100%;
+    }
+
+    @keyframes btnSpin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    @keyframes btnSkeleton {
+      0% {
+        background-position: 200% 0;
+      }
+
+      100% {
+        background-position: -200% 0;
+      }
+    }
+
+    /* Legacy shimmer keyframes (kept for compatibility) */
+    @keyframes btnShimmer {
+      0% {
+        background-position: 200% 0;
+      }
+
+      100% {
+        background-position: -200% 0;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+
+      .btn,
+      .btn::before,
+      .btn::after {
+        transition: none !important;
+        animation: none !important;
+      }
+
+      .btn:hover {
+        transform: none;
+      }
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid rgba(255, 255, 255, .10);
+      border-radius: calc(var(--radius) + 2px);
+      padding: 1.25rem;
+      box-shadow: var(--shadow-soft);
+      backdrop-filter: blur(22px) saturate(1.35);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(255, 255, 255, .14), transparent 28%, rgba(255, 255, 255, .04) 58%, transparent 80%);
+      pointer-events: none;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .err,
+    .ok {
+      font-size: 12px;
+      border-radius: 12px;
+      padding: 10px 12px;
+      margin-bottom: 10px;
+      border: 1px solid transparent;
+    }
+
+    .err {
+      color: #ffd5d9;
+      background: rgba(255, 107, 122, .12);
+      border-color: rgba(255, 107, 122, .26);
+    }
+
+    .ok {
+      color: #ccfff4;
+      background: rgba(180, 151, 207, .11);
+      border-color: rgba(180, 151, 207, .24);
+    }
+
+    .topbar {
+      background: rgba(8, 15, 28, .72);
+      border-bottom: 1px solid rgba(255, 255, 255, .08);
+      padding: 0 1.25rem;
+      min-height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      backdrop-filter: blur(22px) saturate(1.2);
+      box-shadow: 0 12px 28px rgba(2, 8, 23, .20);
+      position: sticky;
+      top: 0;
+      z-index: 40;
+    }
+
+    .topbar::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(180, 151, 207, .45), rgba(124, 157, 255, .45), rgba(192, 132, 252, .35), transparent);
+      opacity: .7;
+    }
+
+    .page-shell {
+      animation: pageIn .5s cubic-bezier(.22, 1, .36, 1) both;
+      padding-bottom: 72px;
+    }
+
+    .stagger-item {
+      animation: fadeUp .45s cubic-bezier(.22, 1, .36, 1) both;
+    }
+
+    .stagger-item:nth-child(1) {
+      animation-delay: .04s;
+    }
+
+    .stagger-item:nth-child(2) {
+      animation-delay: .08s;
+    }
+
+    .stagger-item:nth-child(3) {
+      animation-delay: .12s;
+    }
+
+    .stagger-item:nth-child(4) {
+      animation-delay: .16s;
+    }
+
+    .stagger-item:nth-child(5) {
+      animation-delay: .20s;
+    }
+
+    .stagger-item:nth-child(n+6) {
+      animation-delay: .24s;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 2.5rem 1.5rem;
+      border-radius: 22px;
+      border: 1px dashed rgba(148, 163, 184, .22);
+      background: rgba(255, 255, 255, .03);
+    }
+
+    .empty-state-icon {
+      font-size: 42px;
+      margin-bottom: 10px;
+      opacity: .85;
+      animation: floaty 5s ease-in-out infinite;
+    }
+
+    .empty-state-title {
+      font-size: 14px;
+      font-weight: 800;
+      margin-bottom: 4px;
+    }
+
+    .empty-state-sub {
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .search-result {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 14px;
+      border: 1px solid rgba(255, 255, 255, .10);
+      border-radius: 18px;
+      margin-bottom: 8px;
+      background: rgba(255, 255, 255, .04);
+      backdrop-filter: blur(14px);
+      transition: transform .16s ease, border-color .16s ease, box-shadow .16s ease;
+    }
+
+    .search-result:hover {
+      transform: translateY(-2px);
+      border-color: rgba(180, 151, 207, .24);
+      box-shadow: 0 14px 28px rgba(2, 8, 23, .18);
+    }
+
+    .choice-card {
+      cursor: pointer;
+      text-align: left;
+      padding: 1.1rem;
+      transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
+    }
+
+    .choice-card:hover {
+      transform: translateY(-4px) scale(1.01);
+      box-shadow: 0 22px 42px rgba(2, 8, 23, .28);
+      border-color: rgba(180, 151, 207, 0.4) !important;
+    }
+
+    .choice-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-size: 22px;
+      flex-shrink: 0;
+      box-shadow: 0 12px 24px rgba(2, 8, 23, .22);
+    }
+
+    .choice-icon.admin {
+      background: linear-gradient(135deg, #2563eb, #7c3aed, #c084fc);
+    }
+
+    .choice-icon.user {
+      background: linear-gradient(135deg, #7c3aed, #B497CF, #e0e7ff);
+    }
+
+    .login-choices {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      width: 100%;
+      max-width: 500px;
+      margin-bottom: 24px;
+    }
+
+    @media (max-width: 520px) {
+      .login-choices {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .tab {
+      padding: 8px 16px;
+      border-radius: 999px;
+      border: 1px solid transparent;
+      cursor: pointer;
+      font-size: 13px;
+      color: var(--muted);
+      background: rgba(255, 255, 255, .04);
+      transition: all .18s ease;
+      backdrop-filter: blur(16px);
+    }
+
+    .tab.active {
+      border-color: rgba(180, 151, 207, .28);
+      color: #f7fbff;
+      background: linear-gradient(180deg, rgba(180, 151, 207, .18), rgba(124, 157, 255, .12));
+      box-shadow: 0 12px 26px rgba(2, 8, 23, .22);
+      animation: tabPop .22s ease-out;
+    }
+
+    .badge {
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 999px;
+    }
+
+    .badge-green {
+      background: var(--badge-green-bg);
+      color: var(--badge-green-text);
+      border: 1px solid rgba(180, 151, 207, .16);
+    }
+
+    .badge-purple {
+      background: var(--badge-purple-bg);
+      color: var(--badge-purple-text);
+      border: 1px solid rgba(120, 166, 255, .18);
+    }
+
+    label {
+      font-size: 12px;
+      color: var(--muted);
+      display: block;
+      margin-bottom: 6px;
+      font-weight: 600;
+      letter-spacing: .01em;
+    }
+
+    .text-muted {
+      color: var(--muted);
+    }
+
+    .text-caption {
+      font-size: 11px;
+      color: var(--muted);
+      line-height: 1.45;
+    }
+
+    .text-center {
+      text-align: center;
+    }
+
+    .hero-card-label {
+      font-size: 12px;
+      color: var(--text-soft);
+      font-weight: 700;
+      opacity: .82;
+    }
+
+    .choice-title {
+      font-weight: 800;
+      font-size: 15px;
+      margin-bottom: 2px;
+      color: var(--text);
+    }
+
+    .choice-desc {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .glass-highlight {
+      font-size: 12px;
+      font-weight: 800;
+      color: var(--accent);
+      margin-bottom: 4px;
+    }
+
+    .glass-copy {
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.55;
+    }
+
+    .meta-line {
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .meta-line-lg {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .divider-top {
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid var(--line);
+    }
+
+    .form-select {
+      padding: 9px 12px;
+      border: 1px solid rgba(148, 163, 184, .22);
+      border-radius: 14px;
+      width: 260px;
+      max-width: 100%;
+      background: rgba(8, 15, 28, .58);
+      color: var(--text);
+      backdrop-filter: blur(14px);
+    }
+
+    .stat-card {
+      background: rgba(255, 255, 255, .05);
+      border-radius: 18px;
+      padding: 0.9rem 1rem;
+      border: 1px solid rgba(255, 255, 255, .10);
+      backdrop-filter: blur(18px);
+    }
+
+    .upload-picker {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px;
+      border: 1px dashed rgba(180, 151, 207, .30);
+      border-radius: 18px;
+      background: linear-gradient(180deg, rgba(180, 151, 207, .10), rgba(120, 166, 255, .07));
+      flex-wrap: wrap;
+    }
+
+    .upload-picker p {
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.4;
+    }
+
+    .upload-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .upload-actions input {
+      min-width: 220px;
+    }
+
+    .surface-heading {
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: .02em;
+      color: var(--text);
+    }
+
+    .surface-sub {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+
+    .soft-panel {
+      background: rgba(255, 255, 255, .05);
+      border: 1px solid rgba(255, 255, 255, .10);
+      border-radius: 18px;
+      box-shadow: var(--shadow-soft);
+      backdrop-filter: blur(20px);
+    }
+
+    .hero-shell {
+      position: relative;
+      overflow: hidden;
+      background: rgba(10, 18, 32, 0.45);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: var(--radius);
+      backdrop-filter: blur(24px) saturate(1.2);
+      box-shadow: var(--shadow);
+      color: #fff;
+    }
+
+    .hero-shell::before,
+    .hero-shell::after {
+      content: "";
+      position: absolute;
+      border-radius: 999px;
+      pointer-events: none;
+      filter: blur(8px);
+    }
+
+    .hero-shell::before {
+      width: 260px;
+      height: 260px;
+      right: -90px;
+      top: -100px;
+      background: rgba(255, 255, 255, .12);
+    }
+
+    .hero-shell::after {
+      width: 220px;
+      height: 220px;
+      left: -70px;
+      bottom: -120px;
+      background: rgba(180, 151, 207, 0.15);
+    }
+
+    .hero-kicker {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 12px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, .10);
+      border: 1px solid rgba(255, 255, 255, .12);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: .02em;
+      backdrop-filter: blur(14px);
+    }
+
+    .hero-title {
+      font-size: clamp(32px, 4.5vw, 58px);
+      line-height: 1.02;
+      letter-spacing: -.045em;
+      font-weight: 900;
+      margin: 16px 0 12px;
+      max-width: 12ch;
+      color: var(--text);
+    }
+
+    .section-title {
+      font-size: 18px;
+      font-weight: 800;
+      letter-spacing: -.03em;
+      color: var(--text);
+    }
+
+    .gradient-text {
+      background: linear-gradient(135deg, #fff 0%, var(--accent) 50%, var(--accent-2) 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      background-size: 200% auto;
+      animation: gradientShift 8s ease infinite;
+    }
+
+    .brand-mark {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 36px;
+      height: 36px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, #B497CF, #7c9dff, #c084fc);
+      font-size: 18px;
+      box-shadow: 0 8px 24px rgba(180, 151, 207, .25);
+      flex-shrink: 0;
+    }
+
+    .brand-name {
+      font-weight: 800;
+      font-size: 15px;
+      letter-spacing: -.02em;
+      background: linear-gradient(90deg, #fff, #B497CF);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+
+    .link-back {
+      font-size: 12px;
+      color: var(--accent-2);
+      cursor: pointer;
+      text-align: center;
+      margin-top: 8px;
+      transition: color .15s ease, transform .15s ease;
+      display: inline-block;
+      width: 100%;
+    }
+
+    .link-back:hover {
+      color: var(--accent);
+      transform: translateX(-3px);
+    }
+
+    .link-accent {
+      color: var(--accent);
+      cursor: pointer;
+      font-weight: 600;
+      transition: opacity .15s ease;
+    }
+
+    .link-accent:hover {
+      opacity: .8;
+      text-decoration: underline;
+    }
+
+    .hero-copy {
+      font-size: 15px;
+      line-height: 1.6;
+      color: var(--text-soft);
+      max-width: 54ch;
+    }
+
+    .hero-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.4fr) minmax(280px, .9fr);
+      gap: 18px;
+      align-items: stretch;
+    }
+
+    .hero-card {
+      background: rgba(255, 255, 255, .07);
+      border: 1px solid rgba(255, 255, 255, .11);
+      border-radius: 28px;
+      padding: 1rem;
+      backdrop-filter: blur(24px) saturate(1.25);
+      box-shadow: 0 18px 42px rgba(2, 8, 23, .18);
+    }
+
+    .hero-card .card {
+      color: var(--text);
+      box-shadow: 0 16px 32px rgba(2, 8, 23, .18);
+      transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease, background .18s ease;
+      border-color: rgba(255, 255, 255, .10);
+      background: rgba(255, 255, 255, .06);
+    }
+
+    .hero-card .card p {
+      color: var(--muted);
+    }
+
+    .hero-card .card .choice-title {
+      color: var(--text);
+    }
+
+    .hero-card .card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 22px 38px rgba(2, 8, 23, .22);
+      border-color: rgba(255, 255, 255, .18);
+    }
+
+    .hero-metrics {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    .hero-metric {
+      padding: 12px;
+      border-radius: 18px;
+      background: rgba(255, 255, 255, .07);
+      border: 1px solid rgba(255, 255, 255, .10);
+      backdrop-filter: blur(16px);
+    }
+
+    .hero-metric strong {
+      display: block;
+      font-size: 18px;
+      line-height: 1.1;
+      color: var(--text);
+    }
+
+    .hero-metric span {
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .glow-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, .10);
+      color: var(--text);
+      font-size: 12px;
+      font-weight: 700;
+      border: 1px solid rgba(255, 255, 255, .10);
+      box-shadow: 0 12px 28px rgba(2, 8, 23, .18);
+      backdrop-filter: blur(14px);
+    }
+
+    .upload-progress {
+      padding: 12px 14px;
+      border-radius: 18px;
+      background: rgba(255, 255, 255, .05);
+      border: 1px solid rgba(255, 255, 255, .10);
+      box-shadow: var(--shadow-soft);
+      backdrop-filter: blur(16px);
+    }
+
+    .upload-progress.upload-error {
+      background: rgba(255, 107, 122, .10);
+      border-color: rgba(255, 107, 122, .24);
+      color: #ffd5d9;
+    }
+
+    body[data-theme="light"] .upload-progress.upload-error {
+      background: rgba(239, 68, 68, .08);
+      border-color: rgba(239, 68, 68, .18);
+      color: #991b1b;
+    }
+
+    .upload-progress-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 12px;
+      color: var(--muted);
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .upload-track {
+      height: 10px;
+      border-radius: 999px;
+      background: rgba(148, 163, 184, .16);
+      overflow: hidden;
+    }
+
+    .upload-bar {
+      height: 100%;
+      width: 0%;
+      border-radius: 999px;
+      background: linear-gradient(90deg, #B497CF, #7c9dff, #c084fc);
+      transition: width .18s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .upload-bar::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, .35), transparent);
+      animation: shimmer 1.8s ease infinite;
+    }
+
+    .auth-shell {
+      display: grid;
+      grid-template-columns: minmax(0, 1.05fr) minmax(320px, .95fr);
+      gap: 0;
+      max-width: 980px;
+      width: 100%;
+      overflow: hidden;
+      padding: 0;
+      box-shadow: 0 34px 90px rgba(2, 8, 23, .34);
+      border: 1px solid rgba(255, 255, 255, .08);
+    }
+
+    .auth-side {
+      padding: 2rem;
+      background: linear-gradient(160deg, rgba(10, 18, 32, 0.98), rgba(180, 151, 207, 0.55) 55%, rgba(124, 157, 255, 0.45));
+      color: #fff;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .auth-side::before {
+      content: "";
+      position: absolute;
+      inset: auto -60px -60px auto;
+      width: 180px;
+      height: 180px;
+      background: rgba(255, 255, 255, .10);
+      border-radius: 999px;
+      filter: blur(10px);
+    }
+
+    .auth-side::after {
+      content: "";
+      position: absolute;
+      inset: -40px auto auto -50px;
+      width: 120px;
+      height: 120px;
+      background: rgba(180, 151, 207, .28);
+      border-radius: 999px;
+      filter: blur(12px);
+    }
+
+    .auth-panel {
+      padding: 2rem;
+      background: rgba(7, 17, 31, .74);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100%;
+      backdrop-filter: blur(26px) saturate(1.25);
+    }
+
+    .auth-card {
+      width: 100%;
+      max-width: 360px;
+    }
+
+    .auth-kicker {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 12px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, .09);
+      border: 1px solid rgba(255, 255, 255, .12);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: .02em;
+      margin-bottom: 16px;
+      backdrop-filter: blur(14px);
+    }
+
+    .auth-title {
+      font-size: 34px;
+      line-height: 1.02;
+      font-weight: 800;
+      letter-spacing: -.04em;
+      max-width: 10ch;
+    }
+
+    .auth-copy {
+      font-size: 14px;
+      line-height: 1.65;
+      color: rgba(236, 244, 255, .80);
+      margin-top: 12px;
+      max-width: 40ch;
+    }
+
+    .auth-list {
+      display: grid;
+      gap: 10px;
+      margin-top: 22px;
+    }
+
+    .auth-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 14px;
+      border-radius: 18px;
+      background: rgba(255, 255, 255, .07);
+      border: 1px solid rgba(255, 255, 255, .10);
+      backdrop-filter: blur(14px);
+    }
+
+    .auth-item strong {
+      display: block;
+      font-size: 13px;
+    }
+
+    .auth-item span {
+      display: block;
+      font-size: 11px;
+      color: rgba(236, 244, 255, .72);
+      margin-top: 2px;
+    }
+
+    .screen-shell {
+      max-width: 1080px;
+      width: 100%;
+      margin: 0 auto;
+    }
+
+    .screen-banner {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 14px;
+      flex-wrap: wrap;
+      margin-bottom: 1rem;
+    }
+
+    .section-sub {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+
+    .panel-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .panel-title .chip {
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: var(--chip-bg);
+      color: var(--chip-text);
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: .02em;
+      border: 1px solid rgba(180, 151, 207, .18);
+    }
+
+    .glass-row {
+      background: rgba(255, 255, 255, .05);
+      border: 1px solid rgba(255, 255, 255, .10);
+      border-radius: 20px;
+      padding: 14px;
+      box-shadow: var(--shadow-soft);
+      backdrop-filter: blur(18px);
+    }
+
+    .file-card {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+
+    .file-thumb {
+      width: 52px;
+      height: 52px;
+      border-radius: 18px;
+      background: linear-gradient(135deg, #B497CF, #7c9dff, #c084fc);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      flex: 0 0 auto;
+      box-shadow: 0 14px 26px rgba(2, 8, 23, .24);
+      transition: transform .2s ease, box-shadow .2s ease;
+    }
+
+    .file-card:hover .file-thumb {
+      transform: scale(1.06) rotate(-2deg);
+      box-shadow: 0 16px 32px rgba(180, 151, 207, .22);
+    }
+
+    .file-thumb.image {
+      background: linear-gradient(135deg, #f472b6, #c084fc, #7c9dff);
+    }
+
+    .file-thumb.video {
+      background: linear-gradient(135deg, #fb923c, #f97316, #ef4444);
+    }
+
+    .file-thumb.doc {
+      background: linear-gradient(135deg, #60a5fa, #2563eb, #1d4ed8);
+    }
+
+    .file-thumb.other {
+      background: linear-gradient(135deg, #B497CF, #14b8a6, #22c55e);
+    }
+
+    .file-meta {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .file-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: flex-end;
+    }
+
+    .file-card {
+      transform: translateY(0);
+      transition: transform .16s ease, box-shadow .16s ease, border-color .16s ease;
+    }
+
+    .file-card:hover:not(.offline-card) {
+      transform: translateY(-2px);
+      box-shadow: 0 18px 36px rgba(2, 8, 23, .22);
+      border-color: rgba(180, 151, 207, .20);
+    }
+
+    .offline-card {
+      border-color: rgba(255, 107, 122, .15) !important;
+      background: rgba(255, 107, 122, .02) !important;
+    }
+
+    .btn-disabled {
+      opacity: 0.5;
+      pointer-events: none;
+      cursor: not-allowed;
+    }
+
+    .preview-modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 9999;
+      background: rgba(2, 6, 23, .72);
+      backdrop-filter: blur(12px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+
+    .preview-shell {
+      width: min(980px, 100%);
+      max-height: 92vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      background: linear-gradient(180deg, rgba(8, 15, 28, .98), rgba(10, 18, 33, .94));
+      color: #fff;
+      border: 1px solid rgba(255, 255, 255, .10);
+      border-radius: 28px;
+      box-shadow: 0 36px 100px rgba(2, 6, 23, .52);
+      backdrop-filter: blur(22px) saturate(1.2);
+    }
+
+    .preview-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 14px 16px;
+      border-bottom: 1px solid rgba(255, 255, 255, .08);
+      background: rgba(255, 255, 255, .04);
+    }
+
+    .preview-head-title {
+      font-size: 15px;
+      font-weight: 800;
+      letter-spacing: -.02em;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      max-width: 52ch;
+    }
+
+    .preview-head-sub {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    .preview-frame {
+      width: 100%;
+      height: min(74vh, 720px);
+      border: 0;
+      background: #fff;
+    }
+
+    .preview-image {
+      width: 100%;
+      height: min(74vh, 720px);
+      object-fit: contain;
+      background: #0b1220;
+      display: block;
+    }
+
+    .preview-video {
+      width: 100%;
+      height: min(74vh, 720px);
+      background: #000;
+      display: block;
+    }
+
+    .preview-text {
+      width: 100%;
+      height: min(74vh, 720px);
+      border: 0;
+      background: #fff;
+      color: #0f172a;
+      padding: 1rem;
+      font-family: Consolas, Monaco, monospace;
+      white-space: pre-wrap;
+      overflow: auto;
+    }
+
+    .preview-foot {
+      padding: 12px 16px;
+      font-size: 12px;
+      color: var(--muted);
+      border-top: 1px solid rgba(255, 255, 255, .08);
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      margin-bottom: 1rem;
+    }
+
+    .stats-card {
+      padding: 14px;
+      border-radius: 22px;
+      background: linear-gradient(180deg, rgba(255, 255, 255, .06), rgba(255, 255, 255, .04));
+      border: 1px solid rgba(255, 255, 255, .10);
+      box-shadow: 0 14px 30px rgba(2, 8, 23, .16);
+      backdrop-filter: blur(18px);
+      position: relative;
+      overflow: hidden;
+      animation: fadeUp .45s ease both;
+    }
+
+    .stats-card::before {
+      content: "";
+      position: absolute;
+      inset: auto -30px -30px auto;
+      width: 120px;
+      height: 120px;
+      border-radius: 999px;
+      background: radial-gradient(circle, rgba(180, 151, 207, .18), transparent 65%);
+    }
+
+    .stats-label {
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: .04em;
+      color: var(--muted);
+      text-transform: uppercase;
+    }
+
+    .stats-value {
+      font-size: 22px;
+      font-weight: 900;
+      letter-spacing: -.03em;
+      margin-top: 4px;
+      color: var(--text);
+    }
+
+    .stats-sub {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+
+    .usage-track {
+      height: 12px;
+      border-radius: 999px;
+      background: rgba(148, 163, 184, .16);
+      overflow: hidden;
+      margin-top: 10px;
+    }
+
+    .usage-fill {
+      height: 100%;
+      width: 0%;
+      border-radius: 999px;
+      transition: width .8s cubic-bezier(.22, 1, .36, 1);
+      background: linear-gradient(90deg, #B497CF, #7c9dff, #c084fc);
+    }
+
+    .usage-fill.user {
+      background: linear-gradient(90deg, #28d7c5, #14b8a6, #22c55e);
+    }
+
+    .usage-fill.cloud {
+      background: linear-gradient(90deg, #1d4ed8, #78a6ff, #d946ef);
+    }
+
+    .glass-row {
+      animation: fadeUp .35s ease both;
+    }
+
+    .pulse-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: #22c55e;
+      box-shadow: 0 0 0 0 rgba(34, 197, 94, .38);
+      animation: pulse 1.8s infinite;
+      display: inline-block;
+    }
+
+    .floaty {
+      animation: floaty 6s ease-in-out infinite;
+    }
+
+    .floaty.delay {
+      animation-delay: -2s;
+    }
+
+    .floaty.delay2 {
+      animation-delay: -4s;
+    }
+
+    /* Topbar embedded theme button */
+    .theme-toggle-btn {
+      width: 32px !important;
+      height: 32px !important;
+      padding: 0 !important;
+      border-radius: 50% !important;
+      background: rgba(255, 255, 255, .08) !important;
+      border: 1px solid rgba(255, 255, 255, .15) !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      cursor: pointer;
+      transition: all 0.2s ease !important;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.1) !important;
+      font-size: 13px !important;
+      color: #fff !important;
+    }
+    
+    .theme-toggle-btn:hover {
+      background: rgba(255, 255, 255, .18) !important;
+      border-color: rgba(255, 255, 255, .3) !important;
+      transform: scale(1.06);
+    }
+
+    body[data-theme="light"] .theme-toggle-btn {
+      background: rgba(0, 0, 0, .05) !important;
+      border-color: rgba(0, 0, 0, .1) !important;
+      color: #000 !important;
+    }
+    body[data-theme="light"] .theme-toggle-btn:hover {
+      background: rgba(0, 0, 0, .1) !important;
+    }
+
+    .tab-bar {
+      padding: 1rem;
+
+    }
+
+    /* Toast Notification styles */
+    .toast-container {
+      position: fixed;
+      top: 24px;
+      right: 24px;
+      z-index: 10002;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      pointer-events: none;
+    }
+    .toast {
+      background: rgba(15, 23, 42, 0.85);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      padding: 12px 18px;
+      color: #fff;
+      font-size: 13px;
+      font-weight: 600;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      transform: translateY(-20px);
+      opacity: 0;
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      pointer-events: auto;
+    }
+    .toast.show {
+      transform: translateY(0);
+      opacity: 1;
+    }
+    .toast-icon {
+      font-size: 16px;
+    }
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      background: rgba(255, 255, 255, .04);
+      border-bottom: 1px solid rgba(255, 255, 255, .08);
+      backdrop-filter: blur(18px);
+      box-shadow: 0 12px 24px rgba(2, 8, 23, .12);
+    }
+
+    body[data-theme="light"] {
+      --bg: #eef2f8;
+      --bg-2: #fafbfd;
+      --surface: rgba(255, 255, 255, .88);
+      --surface-strong: #ffffff;
+      --text: #0b1220;
+      --text-soft: #334155;
+      --muted: #64748b;
+      --line: rgba(148, 163, 184, .28);
+      --shadow: 0 24px 64px rgba(15, 23, 42, .10);
+      --shadow-soft: 0 8px 24px rgba(15, 23, 42, .06);
+      --accent: #0d9488;
+      --accent-2: #2563eb;
+      --accent-3: #7c3aed;
+      --danger: #dc2626;
+      --chip-bg: rgba(37, 99, 235, .10);
+      --chip-text: #1d4ed8;
+      --badge-green-bg: rgba(13, 148, 136, .12);
+      --badge-green-text: #0f766e;
+      --badge-purple-bg: rgba(37, 99, 235, .10);
+      --badge-purple-text: #1d4ed8;
+      color: var(--text);
+    }
+
+    body[data-theme="light"]::before {
+      background-image: linear-gradient(rgba(15, 23, 42, .04) 1px, transparent 1px), linear-gradient(90deg, rgba(15, 23, 42, .04) 1px, transparent 1px);
+      opacity: .45;
+      mask-image: linear-gradient(180deg, rgba(0, 0, 0, .35), transparent 75%);
+    }
+
+    body[data-theme="light"]::after {
+      opacity: .025;
+    }
+
+    body[data-theme="light"] input,
+    body[data-theme="light"] select,
+    body[data-theme="light"] .form-select {
+      background: #fff;
+      border-color: rgba(148, 163, 184, .32);
+      color: var(--text);
+      box-shadow: 0 1px 2px rgba(15, 23, 42, .04);
+    }
+
+    body[data-theme="light"] input::placeholder,
+    body[data-theme="light"] select::placeholder {
+      color: rgba(100, 116, 139, .72);
+    }
+
+    body[data-theme="light"] input:focus,
+    body[data-theme="light"] select:focus,
+    body[data-theme="light"] .form-select:focus {
+      background: #fff;
+      border-color: rgba(37, 99, 235, .45);
+      box-shadow: 0 0 0 4px rgba(37, 99, 235, .10);
+    }
+
+    body[data-theme="light"] .btn {
+      color: #0b1220;
+      background: linear-gradient(180deg, #ffffff 0%, #eef2f8 100%);
+      border: 1px solid rgba(15, 23, 42, .14);
+      box-shadow: 0 1px 0 rgba(255, 255, 255, .9) inset, 0 -1px 0 rgba(15, 23, 42, .06) inset, 0 8px 22px rgba(15, 23, 42, .10);
+    }
+
+    body[data-theme="light"] .btn:hover {
+      background: linear-gradient(180deg, #ffffff 0%, #e2e8f0 100%);
+      border-color: rgba(15, 23, 42, .22);
+      box-shadow: 0 1px 0 rgba(255, 255, 255, 1) inset, 0 -1px 0 rgba(15, 23, 42, .08) inset, 0 16px 30px rgba(15, 23, 42, .16);
+    }
+
+    body[data-theme="light"] .btn::before {
+      background: linear-gradient(120deg, transparent 15%, rgba(15, 23, 42, .06), transparent 65%);
+    }
+
+    body[data-theme="light"] .btn:focus-visible {
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, .30), 0 1px 0 rgba(255, 255, 255, 1) inset, 0 14px 30px rgba(15, 23, 42, .16);
+    }
+
+    body[data-theme="light"] .btn-purple {
+      color: #fff;
+      background: linear-gradient(135deg, #1d4ed8 0%, #6d28d9 55%, #a855f7 100%);
+      border: 1px solid rgba(15, 23, 42, .18);
+      box-shadow: 0 1px 0 rgba(255, 255, 255, .30) inset, 0 -1px 0 rgba(0, 0, 0, .20) inset, 0 14px 28px rgba(109, 40, 217, .38);
+    }
+
+    body[data-theme="light"] .btn-purple:hover {
+      background: linear-gradient(135deg, #1e40af 0%, #5b21b6 55%, #9333ea 100%);
+      box-shadow: 0 1px 0 rgba(255, 255, 255, .32) inset, 0 -1px 0 rgba(0, 0, 0, .22) inset, 0 22px 40px rgba(109, 40, 217, .50);
+    }
+
+    body[data-theme="light"] .btn-green {
+      color: #04201d;
+      background: linear-gradient(135deg, #0f766e 0%, #14b8a6 55%, #22c55e 100%);
+      border: 1px solid rgba(15, 23, 42, .16);
+      box-shadow: 0 1px 0 rgba(255, 255, 255, .40) inset, 0 -1px 0 rgba(0, 0, 0, .16) inset, 0 14px 28px rgba(13, 148, 136, .38);
+    }
+
+    body[data-theme="light"] .btn-green:hover {
+      color: #fff;
+      background: linear-gradient(135deg, #0d9488 0%, #10b981 55%, #16a34a 100%);
+      box-shadow: 0 1px 0 rgba(255, 255, 255, .42) inset, 0 -1px 0 rgba(0, 0, 0, .18) inset, 0 22px 40px rgba(13, 148, 136, .50);
+    }
+
+    body[data-theme="light"] .btn-red {
+      color: #991b1b;
+      background: linear-gradient(180deg, #fff, #fee2e2);
+      border: 1px solid rgba(220, 38, 38, .32);
+      box-shadow: 0 1px 0 rgba(255, 255, 255, .9) inset, 0 8px 18px rgba(220, 38, 38, .14);
+    }
+
+    body[data-theme="light"] .btn-red:hover {
+      background: linear-gradient(180deg, #fff, #fecaca);
+      border-color: rgba(220, 38, 38, .45);
+      color: #7f1d1d;
+    }
+
+    body[data-theme="light"] .card,
+    body[data-theme="light"] .stat-card,
+    body[data-theme="light"] .soft-panel,
+    body[data-theme="light"] .glass-row,
+    body[data-theme="light"] .upload-picker,
+    body[data-theme="light"] .upload-progress,
+    body[data-theme="light"] .stats-card,
+    body[data-theme="light"] .hero-card,
+    body[data-theme="light"] .auth-panel,
+    body[data-theme="light"] .preview-shell,
+    body[data-theme="light"] .search-result,
+    body[data-theme="light"] .empty-state {
+      background: var(--surface-strong);
+      border-color: rgba(148, 163, 184, .22);
+      color: var(--text);
+      box-shadow: var(--shadow-soft);
+    }
+
+    body[data-theme="light"] .card::before {
+      background: linear-gradient(135deg, rgba(255, 255, 255, .95), transparent 40%, rgba(241, 245, 249, .6) 70%, transparent);
+    }
+
+    body[data-theme="light"] .hero-shell::before,
+    body[data-theme="light"] .hero-shell::after,
+    body[data-theme="light"] .stats-card::before {
+      opacity: .35;
+    }
+
+    body[data-theme="light"] .auth-side::before,
+    body[data-theme="light"] .auth-side::after {
+      opacity: .5;
+    }
+
+    body[data-theme="light"] .topbar {
+      background: rgba(255, 255, 255, .82);
+      border-bottom: 1px solid rgba(148, 163, 184, .20);
+      box-shadow: 0 8px 24px rgba(15, 23, 42, .05);
+    }
+
+    body[data-theme="light"] .tab-bar {
+      background: rgba(255, 255, 255, .72);
+      border-bottom-color: rgba(148, 163, 184, .18);
+    }
+
+    body[data-theme="light"] .tab {
+      background: #fff;
+      color: var(--muted);
+      border-color: rgba(148, 163, 184, .16);
+      box-shadow: 0 1px 2px rgba(15, 23, 42, .04);
+    }
+
+    body[data-theme="light"] .tab.active {
+      color: #0f172a;
+      background: linear-gradient(180deg, #fff, #f1f5f9);
+      border-color: rgba(37, 99, 235, .22);
+      box-shadow: 0 8px 20px rgba(15, 23, 42, .08);
+    }
+
+    body[data-theme="light"] .hero-shell {
+      background: linear-gradient(135deg, #ffffff 0%, #f8fafc 42%, #eef2ff 100%);
+      color: var(--text);
+      border-color: rgba(148, 163, 184, .20);
+      box-shadow: 0 24px 64px rgba(15, 23, 42, .08);
+    }
+
+    body[data-theme="light"] .hero-kicker,
+    body[data-theme="light"] .glow-pill,
+    body[data-theme="light"] .hero-metric {
+      background: #fff;
+      color: var(--text);
+      border-color: rgba(148, 163, 184, .18);
+      box-shadow: 0 4px 14px rgba(15, 23, 42, .05);
+    }
+
+    body[data-theme="light"] .auth-side {
+      color: #fff;
+    }
+
+    body[data-theme="light"] .auth-kicker,
+    body[data-theme="light"] .auth-item {
+      background: rgba(255, 255, 255, .14);
+      color: #fff;
+      border-color: rgba(255, 255, 255, .18);
+    }
+
+    body[data-theme="light"] .auth-panel {
+      background: #fff;
+    }
+
+    body[data-theme="light"] .hero-card {
+      background: rgba(255, 255, 255, .72);
+      border-color: rgba(148, 163, 184, .18);
+    }
+
+    body[data-theme="light"] .hero-card .card {
+      background: #fff;
+      border-color: rgba(148, 163, 184, .16);
+      color: var(--text);
+    }
+
+    body[data-theme="light"] .hero-card .card p,
+    body[data-theme="light"] .hero-card .card .choice-desc {
+      color: var(--muted);
+    }
+
+    body[data-theme="light"] .hero-card .card .choice-title {
+      color: var(--text);
+    }
+
+    body[data-theme="light"] .hero-copy,
+    body[data-theme="light"] .auth-copy {
+      color: var(--muted);
+    }
+
+    body[data-theme="light"] .hero-card-label {
+      color: var(--muted);
+      opacity: 1;
+    }
+
+    body[data-theme="light"] .panel-title .chip,
+    body[data-theme="light"] .badge-green,
+    body[data-theme="light"] .badge-purple {
+      background: var(--chip-bg);
+      color: var(--chip-text);
+      border-color: rgba(37, 99, 235, .14);
+    }
+
+    body[data-theme="light"] .badge-green {
+      background: var(--badge-green-bg);
+      color: var(--badge-green-text);
+      border-color: rgba(13, 148, 136, .18);
+    }
+
+    body[data-theme="light"] .badge-purple {
+      background: var(--badge-purple-bg);
+      color: var(--badge-purple-text);
+      border-color: rgba(37, 99, 235, .18);
+    }
+
+    body[data-theme="light"] .glass-highlight {
+      color: #0d9488;
+    }
+
+    body[data-theme="light"] .preview-shell {
+      background: #fff;
+      color: var(--text);
+    }
+
+    body[data-theme="light"] .preview-head {
+      background: #f8fafc;
+      border-bottom-color: rgba(148, 163, 184, .18);
+      color: var(--text);
+    }
+
+    body[data-theme="light"] .preview-foot {
+      background: #f8fafc;
+      border-top-color: rgba(148, 163, 184, .18);
+      color: var(--muted);
+    }
+
+    body[data-theme="light"] .preview-head-title {
+      color: var(--text);
+    }
+
+    body[data-theme="light"] .preview-image {
+      background: #f1f5f9;
+    }
+
+    body[data-theme="light"] .err {
+      color: #991b1b;
+      background: rgba(239, 68, 68, .08);
+      border-color: rgba(239, 68, 68, .18);
+    }
+
+    body[data-theme="light"] .ok {
+      color: #0f766e;
+      background: rgba(13, 148, 136, .08);
+      border-color: rgba(13, 148, 136, .18);
+    }
+
+    body[data-theme="light"] .theme-toggle {
+      background: linear-gradient(145deg, #ffffff, #f8fafc);
+      color: #0f172a;
+      border-color: rgba(148, 163, 184, .24);
+      box-shadow: 0 16px 36px rgba(15, 23, 42, .12), inset 0 1px 0 rgba(255, 255, 255, .9);
+    }
+
+    body[data-theme="light"] .aurora::before {
+      background:
+        radial-gradient(ellipse 80% 50% at 20% -10%, rgba(37, 99, 235, .12), transparent 55%),
+        radial-gradient(ellipse 60% 45% at 85% 5%, rgba(13, 148, 136, .10), transparent 50%),
+        radial-gradient(ellipse 50% 40% at 50% 100%, rgba(124, 58, 237, .08), transparent 55%),
+        linear-gradient(180deg, var(--bg) 0%, var(--bg-2) 100%);
+    }
+
+    body[data-theme="light"] .orb-1 {
+      background: rgba(37, 99, 235, .12);
+    }
+
+    body[data-theme="light"] .orb-2 {
+      background: rgba(13, 148, 136, .10);
+    }
+
+    body[data-theme="light"] .orb-3 {
+      background: rgba(124, 58, 237, .08);
+    }
+
+    body[data-theme="light"] .brand-name {
+      background: linear-gradient(90deg, #0b1220, #2563eb);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+
+    body[data-theme="light"] .gradient-text {
+      background: linear-gradient(135deg, #0b1220 0%, #2563eb 38%, #0d9488 68%, #7c3aed 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+
+    body[data-theme="light"] .link-back {
+      color: #2563eb;
+    }
+
+    body[data-theme="light"] .link-accent {
+      color: #0d9488;
+    }
+
+    body[data-theme="light"] .topbar::after {
+      opacity: .55;
+    }
+
+    body[data-theme="light"] .section-title,
+    body[data-theme="light"] .surface-heading,
+    body[data-theme="light"] .empty-state-title {
+      color: var(--text);
+    }
+
+    body[data-theme="light"] .upload-picker {
+      background: linear-gradient(180deg, rgba(13, 148, 136, .06), rgba(37, 99, 235, .04));
+      border-color: rgba(13, 148, 136, .28);
+    }
+
+    @keyframes fadeUp {
+      from {
+        opacity: 0;
+        transform: translateY(14px)
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0)
+      }
+    }
+
+    @keyframes floaty {
+
+      0%,
+      100% {
+        transform: translateY(0)
+      }
+
+      50% {
+        transform: translateY(-8px)
+      }
+    }
+
+    @keyframes pulse {
+      0% {
+        box-shadow: 0 0 0 0 rgba(34, 197, 94, .38)
+      }
+
+      70% {
+        box-shadow: 0 0 0 12px rgba(34, 197, 94, 0)
+      }
+
+      100% {
+        box-shadow: 0 0 0 0 rgba(34, 197, 94, 0)
+      }
+    }
+
+    @keyframes tabPop {
+      0% {
+        transform: scale(.98)
+      }
+
+      100% {
+        transform: scale(1)
+      }
+    }
+
+    @keyframes orbFloat {
+
+      0%,
+      100% {
+        transform: translate(0, 0) scale(1)
+      }
+
+      33% {
+        transform: translate(3vw, 2vh) scale(1.05)
+      }
+
+      66% {
+        transform: translate(-2vw, 3vh) scale(.96)
+      }
+    }
+
+    @keyframes gradientShift {
+
+      0%,
+      100% {
+        background-position: 0% center
+      }
+
+      50% {
+        background-position: 100% center
+      }
+    }
+
+    @keyframes shimmer {
+      0% {
+        transform: translateX(-100%)
+      }
+
+      100% {
+        transform: translateX(100%)
+      }
+    }
+
+    @keyframes pageIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px) scale(.995)
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1)
+      }
+    }
+
+    @keyframes heroIn {
+      from {
+        opacity: 0;
+        transform: translateY(24px)
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0)
+      }
+    }
+
+    .hero-animate {
+      animation: heroIn .7s cubic-bezier(.22, 1, .36, 1) both;
+    }
+
+    .hero-animate.d1 {
+      animation-delay: .08s;
+    }
+
+    .hero-animate.d2 {
+      animation-delay: .16s;
+    }
+
+    .hero-animate.d3 {
+      animation-delay: .24s;
+    }
+
+    .hero-animate.d4 {
+      animation-delay: .32s;
+    }
+
+    @media (max-width: 760px) {
+      .btn {
+        width: auto;
+      }
+
+      .topbar {
+        padding: 0 .9rem;
+        gap: 8px;
+      }
+
+      .tab {
+        font-size: 12px;
+        padding: 8px 12px;
+      }
+
+      .upload-picker {
+        align-items: stretch;
+      }
+
+      .upload-actions {
+        width: 100%;
+      }
+
+      .upload-actions input {
+        min-width: 0;
+      }
+
+      .upload-actions .btn {
+        flex: 1;
+      }
+
+      .hero-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .hero-metrics {
+        grid-template-columns: 1fr;
+      }
+
+      .auth-shell {
+        grid-template-columns: 1fr;
+      }
+
+      .auth-side,
+      .auth-panel {
+        padding: 1.25rem;
+      }
+
+      .auth-title {
+        max-width: none;
+        font-size: 28px;
+      }
+
+      .hero-card {
+        padding: .9rem;
+      }
+
+      .hero-card .card {
+        padding: 1rem;
+      }
+
+      .file-actions {
+        width: 100%;
+        justify-content: stretch;
+      }
+
+      .file-actions .btn {
+        flex: 1 1 100%;
+        width: 100%;
+      }
+
+      .theme-toggle {
+        width: 48px;
+        height: 48px;
+      }
+    }
+
+    @media (max-width: 620px) {
+      body::before {
+        background-size: 34px 34px;
+      }
+
+      .card {
+        border-radius: 18px;
+        padding: 1rem;
+      }
+
+      .topbar {
+        min-height: 58px;
+      }
+
+      .tab {
+        flex: 1;
+        text-align: center;
+      }
+
+      .hero-title {
+        max-width: none;
+      }
+
+      .hero-copy {
+        font-size: 14px;
+      }
+
+      .hero-metric strong {
+        font-size: 16px;
+      }
+
+      .hero-metric span {
+        font-size: 10px;
+      }
+
+      .file-card {
+        gap: 10px;
+      }
+    }
+
+    .link-back-floating:hover {
+      color: var(--accent) !important;
+    }
+
+    /* GlassIcons + macOS Style Dock */
+    .dock-outer {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 30px;
+      /* 30px invisible trigger area at bottom of screen */
+      display: flex;
+      justify-content: center;
+      align-items: flex-end;
+      z-index: 9999;
+    }
+
+    .dock-panel {
+      display: flex;
+      flex-direction: row;
+      align-items: flex-end;
+      gap: 16px;
+      padding: 12px 18px;
+      background: rgba(20, 20, 22, 0.45);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 28px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6), inset 0 1px 1px rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      transform: translateY(150px);
+      transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      margin-bottom: 20px;
+      /* Keeps the dock 20px above the edge when visible */
+    }
+
+    .dock-outer:hover .dock-panel,
+    .dock-panel:hover,
+    .dock-panel:focus-within {
+      transform: translateY(0);
+    }
+
+    .dock-item {
+      background-color: transparent;
+      outline: none;
+      position: relative;
+      width: 60px;
+      height: 60px;
+      perspective: 24em;
+      transform-style: preserve-3d;
+      -webkit-tap-highlight-color: transparent;
+      border: none;
+      cursor: pointer;
+      margin: 0;
+      padding: 0;
+      will-change: width, height;
+      transform-origin: bottom center;
+    }
+
+    .icon-btn__back,
+    .icon-btn__front {
+      border-radius: 1.2em;
+      /* relative to size */
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      transition: opacity 0.2s, transform 0.2s;
+    }
+
+    .icon-btn__back {
+      box-shadow: 0.5em -0.5em 0.75em hsla(223, 10%, 10%, 0.15);
+      display: block;
+      transform: rotate(15deg);
+      transform-origin: 100% 100%;
+    }
+
+    .icon-btn__front {
+      background-color: hsla(0, 0%, 100%, 0.15);
+      box-shadow: 0 0 0 0.1em hsla(0, 0%, 100%, 0.3) inset;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      display: flex;
+      transform-origin: 80% 50%;
+    }
+
+    .dock-item:focus-visible .icon-btn__back,
+    .dock-item:hover .icon-btn__back {
+      transform: rotate(25deg) translate3d(-0.15em, -0.15em, 0.15em);
+    }
+
+    .dock-item:focus-visible .icon-btn__front,
+    .dock-item:hover .icon-btn__front {
+      transform: translate3d(0, 0, 1em);
+    }
+
+    .icon-btn__icon {
+      margin: auto;
+      width: 40%;
+      height: 40%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .icon-btn__icon svg {
+      width: 100% !important;
+      height: 100% !important;
+      stroke: #fff;
+      stroke-width: 1.5;
+      fill: none !important;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .dock-label {
+      position: absolute;
+      top: -45px;
+      left: 50%;
+      transform: translateX(-50%) translateY(10px);
+      background: rgba(0, 0, 0, 0.85);
+      color: #fff;
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 500;
+      white-space: nowrap;
+      pointer-events: none;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.2s, transform 0.2s, visibility 0.2s;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    }
+
+    .dock-item:hover .dock-label {
+      opacity: 1;
+      visibility: visible;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    body[data-theme="light"] .dock-panel {
+      background: rgba(255, 255, 255, 0.7);
+      border: 1px solid rgba(0, 0, 0, 0.1);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+    }
+
+    body[data-theme="light"] .icon-btn__front {
+      background-color: hsla(0, 0%, 100%, 0.4);
+      box-shadow: 0 0 0 0.1em hsla(0, 0%, 0%, 0.1) inset;
+    }
+
+    body[data-theme="light"] .icon-btn__icon svg {
+      stroke: #333;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="aurora" aria-hidden="true">
+    <div class="glowing-orb orb-1"></div>
+    <div class="glowing-orb orb-2"></div>
+    <div class="glowing-orb orb-3"></div>
+    <canvas id="dot-field-canvas" style="position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; opacity: 0.45;"></canvas>
+    <svg id="dot-field-svg" style="position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none;">
+      <defs>
+        <radialGradient id="dot-field-glow">
+          <stop offset="0%" stop-color="#120F17" stop-opacity="0.85" />
+          <stop offset="100%" stop-color="transparent" />
+        </radialGradient>
+      </defs>
+      <circle id="dot-field-glow-circle" cx="-9999" cy="-9999" r="160" fill="url(#dot-field-glow)" style="opacity: 0; will-change: opacity;" />
+    </svg>
+    <div class="bg-ring ring-1"></div>
+    <div class="bg-ring ring-2"></div>
+  </div>
+
+
+
+  <div id="pg-landing" class="page-shell"
+    style="display:flex;align-items:center;justify-content:center;min-height:100vh;padding:1.25rem;position:relative;">
+    <a href="/" class="link-back-floating"
+      style="position: absolute; top: 24px; left: 24px; display: flex; align-items: center; gap: 8px; color: var(--text-soft); text-decoration: none; font-size: 15px; font-weight: 500; transition: color 0.2s; pointer-events: auto; z-index: 100;">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+        stroke-linecap="round" stroke-linejoin="round">
+        <line x1="19" y1="12" x2="5" y2="12" />
+        <polyline points="12 19 5 12 12 5" />
+      </svg>
+      Back to home
+    </a>
+    <div class="card hero-shell" style="max-width:680px; width:100%; padding:2.5rem; text-align:center;">
+      <div style="position:relative; z-index:1; display:flex; flex-direction:column; align-items:center;">
+        <div class="hero-kicker hero-animate">☁️ MyCloud Vault</div>
+        <h1 class="hero-title hero-animate d1"
+          style="max-width:none; font-size:42px; margin:20px 0 12px; line-height:1.1; letter-spacing:-0.03em; text-align:center;">
+          <span class="gradient-text">Access Personal Cloud</span></h1>
+        <p class="hero-copy hero-animate d2"
+          style="max-width:540px; margin:0 auto 32px auto; font-size:15px; color:var(--text-soft); line-height:1.6; text-align:center;">
+          Select your workspace pathway below to manage storage folders, authorize users, or upload files from your
+          devices.</p>
+
+        <div class="login-choices hero-animate d3">
+          <div class="card choice-card" onclick="goto('pg-admin-login')"
+            style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06); padding:20px 16px; border-radius:18px; text-align:center; transition:all 0.2s ease;">
+            <div class="choice-icon admin" style="margin:0 auto 12px auto;">🛡️</div>
+            <p class="choice-title" style="font-weight:700; font-size:16px; color:var(--text);">Admin Portal</p>
+            <p class="choice-desc" style="font-size:12px; color:var(--muted); margin-top:4px;">Manage storage & users
+            </p>
+          </div>
+
+          <div class="card choice-card" onclick="goto('pg-user-login')"
+            style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06); padding:20px 16px; border-radius:18px; text-align:center; transition:all 0.2s ease;">
+            <div class="choice-icon user" style="margin:0 auto 12px auto;">👤</div>
+            <p class="choice-title" style="font-weight:700; font-size:16px; color:var(--text);">User Portal</p>
+            <p class="choice-desc" style="font-size:12px; color:var(--muted); margin-top:4px;">Upload & access files</p>
+          </div>
+        </div>
+
+        <p class="hero-animate d4" style="font-size:13px; color:var(--muted);">
+          Want to host a cloud? <a href="/download"
+            style="color:var(--accent); text-decoration:underline; font-weight:600;">Download Desktop App</a>
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ADMIN LOGIN/REGISTER -->
+  <div id="pg-admin-login" class="hidden"
+    style="display:flex;align-items:center;justify-content:center;min-height:100vh;padding:1.25rem;">
+    <div class="card auth-shell">
+      <div class="auth-side">
+        <div class="auth-kicker">🛡️ Admin console</div>
+        <div class="auth-title">Create and control clouds.</div>
+        <div class="auth-copy">Set storage paths, manage users, and keep your private cloud organized from one place.
+        </div>
+        <div class="auth-list">
+          <div class="auth-item">
+            <div class="glow-pill"
+              style="background:rgba(255,255,255,.14);color:#fff;box-shadow:none;padding:6px 10px;">01</div>
+            <div><strong>Cloud setup</strong><span>Point storage at your pendrive</span></div>
+          </div>
+          <div class="auth-item">
+            <div class="glow-pill"
+              style="background:rgba(255,255,255,.14);color:#fff;box-shadow:none;padding:6px 10px;">02</div>
+            <div><strong>User control</strong><span>Review registrations and activity</span></div>
+          </div>
+          <div class="auth-item">
+            <div class="glow-pill"
+              style="background:rgba(255,255,255,.14);color:#fff;box-shadow:none;padding:6px 10px;">03</div>
+            <div><strong>File oversight</strong><span>Delete, inspect, and manage files</span></div>
+          </div>
+        </div>
+      </div>
+      <!-- LOGIN VIEW -->
+      <div class="auth-panel" id="admin-login-view" style="width:100%;">
+        <div class="auth-card">
+          <div class="section-title" style="margin-bottom:6px;">Admin Login</div>
+          <div class="section-sub" style="margin-bottom:1rem;">Sign in to manage your private cloud.</div>
+          <div id="al-err" class="err hidden"></div>
+          <label>Username</label>
+          <input id="al-user" type="text" placeholder="admin" style="margin-bottom:10px;" />
+          <label>Password</label>
+          <input id="al-pass" type="password" placeholder="••••••" style="margin-bottom:1rem;"
+            onkeydown="if(event.key==='Enter')adminLogin()" />
+          <button class="btn btn-purple" style="width:100%;" onclick="adminLogin()">Sign in as Admin</button>
+          <p class="text-muted text-center" style="font-size:12px;margin-top:10px;">
+            Need a separate admin account? <span class="link-accent" onclick="toggleAdminAuth(true)">Register</span>
+          </p>
+          <p class="text-caption text-center" style="margin-top:10px; opacity: 0.7;">Default: admin / admin123</p>
+          <p class="link-back" onclick="goto('pg-landing')">← Back to home</p>
+        </div>
+      </div>
+      <!-- REGISTER VIEW -->
+      <div class="auth-panel hidden" id="admin-register-view" style="width:100%;">
+        <div class="auth-card">
+          <div class="section-title" style="margin-bottom:6px;">Create Admin Account</div>
+          <div class="section-sub" style="margin-bottom:1rem;">Register a new admin profile.</div>
+          <div id="ar-err" class="err hidden"></div>
+          <div id="ar-ok" class="ok hidden"></div>
+          <label>Username</label>
+          <input id="ar-user" type="text" placeholder="Choose admin username" style="margin-bottom:10px;" />
+          <label>Password</label>
+          <input id="ar-pass" type="password" placeholder="Choose password" style="margin-bottom:10px;" />
+          <label>Confirm password</label>
+          <input id="ar-pass2" type="password" placeholder="Repeat password" style="margin-bottom:1rem;"
+            onkeydown="if(event.key==='Enter')adminRegister()" />
+          <button class="btn btn-purple" style="width:100%;" onclick="adminRegister()">Create Admin Account</button>
+          <p class="text-muted text-center" style="font-size:12px;margin-top:10px;">
+            Already registered? <span class="link-accent" onclick="toggleAdminAuth(false)">Sign in</span>
+          </p>
+          <p class="link-back" onclick="goto('pg-landing')">← Back to home</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ADMIN DASHBOARD -->
+  <div id="pg-admin" class="hidden page-shell" style="min-height:100vh;display:flex;flex-direction:column;">
+    <div class="topbar">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div class="brand-mark">🛡️</div>
+        <span class="brand-name">Admin Panel</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;justify-content:flex-end;">
+        <button class="btn btn-sm theme-toggle-btn" onclick="toggleTheme()" aria-label="Toggle theme" title="Toggle theme">
+          <span class="theme-icon-label">🌙</span>
+        </button>
+        <button class="btn btn-sm" onclick="api('/api/admin/logout','POST').then(()=>goto('pg-landing'))">Sign out</button>
+      </div>
+    </div>
+    <div class="tab-bar">
+      <button class="tab active" id="tab-clouds" onclick="adminTab('clouds')">☁️ My Clouds</button>
+      <button class="tab" id="tab-users" onclick="adminTab('users')">👥 Users</button>
+      <button class="tab" id="tab-files" onclick="adminTab('files')">📁 Files</button>
+    </div>
+    <div class="screen-shell" style="padding:1.25rem;flex:1;width:100%;">
+      <div class="screen-banner">
+        <div>
+          <div class="section-title">Admin workspace</div>
+          <div class="section-sub">Create clouds, review users, and inspect files in one place.</div>
+        </div>
+        <div class="glow-pill">⚡ Live control center</div>
+      </div>
+
+      <!-- CLOUDS TAB -->
+      <div id="tc-clouds">
+        <!-- HOST SERVER CONNECTION SHARING CARD -->
+        <div class="card" id="sharing-info-card"
+          style="margin-bottom:1rem; background:linear-gradient(135deg, rgba(180, 151, 207, 0.05), rgba(124, 157, 255, 0.05)); border-color: rgba(255, 255, 255, 0.1);">
+          <div class="panel-title" style="display:flex; justify-content:space-between; align-items:center;">
+            <div style="display:flex; align-items:center; gap:8px;">
+              <div class="chip" style="background:rgba(180, 151, 207, 0.15); color:var(--accent);">SERVER</div>
+              <h3 style="font-size:14px;font-weight:800;">MyCloud Host Connection</h3>
+            </div>
+            <span style="font-size:11px; color:var(--muted); font-weight:600;" id="server-status-badge">🟢 ONLINE</span>
+          </div>
+          <p class="text-caption" style="margin-bottom:12px; font-size:12px; color:var(--muted);">
+            To let users from other laptops or phones connect to your cloud storage, share one of the links below.
+          </p>
+          <div style="display:grid; grid-template-columns:1fr; gap:10px;">
+            <div
+              style="padding:10px; border-radius:10px; background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.04); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+              <div>
+                <p style="font-size:11px; font-weight:700; color:var(--accent-2); text-transform:uppercase;">Same Wi-Fi
+                  Network</p>
+                <p id="share-local-ip"
+                  style="font-family:monospace; font-size:13px; color:var(--text); margin-top:2px; word-break:break-all;">
+                  Detecting...</p>
+              </div>
+              <button class="btn btn-sm btn-purple" style="padding:3px 10px; font-size:11px;"
+                onclick="copyToClipboard(document.getElementById('share-local-ip').innerText)">Copy</button>
+            </div>
+            <div
+              style="padding:10px; border-radius:10px; background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.04); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+              <div>
+                <p style="font-size:11px; font-weight:700; color:var(--accent); text-transform:uppercase;">Anywhere
+                  (Public Tunnel)</p>
+                <p id="share-tunnel-url"
+                  style="font-family:monospace; font-size:13px; color:var(--accent); margin-top:2px; word-break:break-all;">
+                  Starting tunnel...</p>
+              </div>
+              <button class="btn btn-sm btn-green" id="btn-copy-tunnel" style="padding:3px 10px; font-size:11px;"
+                onclick="copyToClipboard(document.getElementById('share-tunnel-url').innerText)">Copy</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" style="margin-bottom:1rem;">
+          <div class="panel-title">
+            <div class="chip">CREATE</div>
+            <h3 style="font-size:14px;font-weight:800;">Create New Cloud</h3>
+          </div>
+          <div id="cc-err" class="err hidden"></div>
+          <div id="cc-ok" class="ok hidden"></div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
+            <div><label>Cloud name</label><input id="cc-name" placeholder="e.g. Vishnu's Cloud" /></div>
+            <div><label>Cloud password</label><input id="cc-pass" type="password" placeholder="Users need this" /></div>
+          </div>
+          <div style="margin-bottom:10px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px;">
+              <label style="margin-bottom:0;">Storage Path (USB Drive)</label>
+              <button class="btn btn-sm btn-purple" type="button" onclick="refreshUSBDrives()"
+                style="padding: 3px 8px; font-size: 11px;">🔄 Scan USBs</button>
+            </div>
+            <div style="display:flex;gap:8px;margin-bottom:6px;">
+              <select id="cc-usb-select" onchange="onUSBSelectChange()" style="flex: 1;">
+                <option value="custom">Custom Path...</option>
+              </select>
+            </div>
+            <input id="cc-path" placeholder="Windows: D:\  or  Linux/Mac: /media/yourname/pendrive"
+              style="margin-top:4px;" />
+            <p class="text-caption" style="margin-top:3px;">
+              The app will create a subfolder here for your cloud files.
+            </p>
+          </div>
+          <div style="margin-bottom:12px;">
+            <label>Storage limit (GB)</label>
+            <input id="cc-limit" type="number" value="100" style="width:120px;" />
+          </div>
+          <button class="btn btn-purple" onclick="createCloud()">Create Cloud</button>
+        </div>
+        <div id="cloud-list"></div>
+      </div>
+
+      <!-- USERS TAB -->
+      <div id="tc-users" class="hidden">
+        <div id="users-list"></div>
+      </div>
+
+      <!-- FILES TAB -->
+      <div id="tc-files" class="hidden">
+        <div style="margin-bottom:12px;">
+          <label>Select cloud to view files:</label>
+          <select id="files-cloud-sel" class="form-select" onchange="loadAdminFiles()"></select>
+        </div>
+        <div id="admin-files"></div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- USER LOGIN -->
+  <div id="pg-user-login" class="hidden"
+    style="display:flex;align-items:center;justify-content:center;min-height:100vh;padding:1.25rem;">
+    <div class="card auth-shell">
+      <div class="auth-side">
+        <div class="auth-kicker">👤 User access</div>
+        <div class="auth-title">Connect and upload anywhere.</div>
+        <div class="auth-copy">Sign in, search your cloud, and move files from your phone or laptop into your own
+          private storage.</div>
+        <div class="auth-list">
+          <div class="auth-item">
+            <div class="glow-pill"
+              style="background:rgba(255,255,255,.14);color:#fff;box-shadow:none;padding:6px 10px;">Tap</div>
+            <div><strong>Mobile ready</strong><span>Choose files from gallery or Files app</span></div>
+          </div>
+          <div class="auth-item">
+            <div class="glow-pill"
+              style="background:rgba(255,255,255,.14);color:#fff;box-shadow:none;padding:6px 10px;">Fast</div>
+            <div><strong>Quick uploads</strong><span>See progress and completion clearly</span></div>
+          </div>
+          <div class="auth-item">
+            <div class="glow-pill"
+              style="background:rgba(255,255,255,.14);color:#fff;box-shadow:none;padding:6px 10px;">Safe</div>
+            <div><strong>Private files</strong><span>Only you and your cloud can access them</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="auth-panel">
+        <div class="auth-card">
+          <div class="section-title" style="margin-bottom:6px;">User Login</div>
+          <div class="section-sub" style="margin-bottom:1rem;">Sign in to search, connect, and upload.</div>
+          <div id="ul-err" class="err hidden"></div>
+          <label>Username</label>
+          <input id="ul-user" type="text" placeholder="Your username" style="margin-bottom:10px;" />
+          <label>Password</label>
+          <input id="ul-pass" type="password" placeholder="••••••" style="margin-bottom:1rem;"
+            onkeydown="if(event.key==='Enter')userLogin()" />
+          <button class="btn btn-green" style="width:100%;" onclick="userLogin()">Sign in</button>
+          <p class="text-muted text-center" style="font-size:12px;margin-top:10px;">
+            No account? <span class="link-accent" onclick="goto('pg-user-register')">Register</span>
+          </p>
+          <p class="link-back" onclick="goto('pg-landing')">← Back to home</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- USER REGISTER -->
+  <div id="pg-user-register" class="hidden page-shell"
+    style="display:flex;align-items:center;justify-content:center;min-height:100vh;padding:1.25rem;">
+    <div class="card auth-shell">
+      <div class="auth-side">
+        <div class="auth-kicker">✨ New account</div>
+        <div class="auth-title">Join your private cloud.</div>
+        <div class="auth-copy">Create a username, connect to a cloud, and start uploading from your phone or laptop in
+          seconds.</div>
+        <div class="auth-list">
+          <div class="auth-item">
+            <div class="glow-pill"
+              style="background:rgba(255,255,255,.14);color:#fff;box-shadow:none;padding:6px 10px;">Free</div>
+            <div><strong>Personal vault</strong><span>Your files stay in your own folder</span></div>
+          </div>
+          <div class="auth-item">
+            <div class="glow-pill"
+              style="background:rgba(255,255,255,.14);color:#fff;box-shadow:none;padding:6px 10px;">Fast</div>
+            <div><strong>Quick setup</strong><span>Register, search, connect, upload</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="auth-panel">
+        <div class="auth-card">
+          <div class="section-title" style="margin-bottom:6px;">Create Account</div>
+          <div class="section-sub" style="margin-bottom:1rem;">Set up your user profile to get started.</div>
+          <div id="ur-err" class="err hidden"></div>
+          <div id="ur-ok" class="ok hidden"></div>
+          <label>Username</label>
+          <input id="ur-user" type="text" placeholder="Choose username" style="margin-bottom:10px;" />
+          <label>Password</label>
+          <input id="ur-pass" type="password" placeholder="Choose password" style="margin-bottom:10px;" />
+          <label>Confirm password</label>
+          <input id="ur-pass2" type="password" placeholder="Repeat password" style="margin-bottom:1rem;"
+            onkeydown="if(event.key==='Enter')userRegister()" />
+          <button class="btn btn-green" style="width:100%;" onclick="userRegister()">Create Account</button>
+          <p class="text-muted text-center" style="font-size:12px;margin-top:10px;">
+            Already have one? <span class="link-accent" onclick="goto('pg-user-login')">Sign in</span>
+          </p>
+          <p class="link-back" onclick="goto('pg-landing')">← Back to home</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- USER DASHBOARD -->
+  <div id="pg-user" class="hidden page-shell" style="min-height:100vh;display:flex;flex-direction:column;">
+    <div class="topbar">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div class="brand-mark">☁️</div>
+        <span id="u-cloud-name" class="brand-name">No cloud connected</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end;">
+        <span id="u-username-label" class="username-label"></span>
+        <button class="btn btn-sm theme-toggle-btn" onclick="toggleTheme()" aria-label="Toggle theme" title="Toggle theme">
+          <span class="theme-icon-label">🌙</span>
+        </button>
+        <button id="u-switch-btn" class="btn btn-sm btn-purple" onclick="disconnectCloud()">Switch vault/cloud</button>
+        <button class="btn btn-sm" onclick="api('/api/user/logout','POST').then(()=>goto('pg-landing'))">Sign out</button>
+      </div>
+    </div>
+    <div class="screen-shell" style="padding:1.25rem;flex:1;width:100%;">
+      <div class="screen-banner">
+        <div>
+          <div class="section-title">User workspace</div>
+          <div class="section-sub">Search, connect, upload, and manage your own private vault inside each cloud.</div>
+        </div>
+        <div class="glow-pill"><span class="pulse-dot"></span> Connected workspace</div>
+      </div>
+
+      <!-- Offline Banner -->
+      <div id="u-offline-banner" class="err hidden"
+        style="margin-bottom:1rem; padding: 16px; display: flex; align-items: center; gap: 14px; border-radius: 20px; font-weight: 600;">
+        <span style="font-size: 26px;">⚠️</span>
+        <div>
+          <div style="font-size: 14px; font-weight: 800; color: #ffd5d9;">Cloud Storage Offline</div>
+          <div style="font-size: 12px; font-weight: 400; opacity: 0.85; margin-top: 3px; color: #ffd5d9;">The admin's
+            USB drive is not connected to the host computer. File uploads, downloads, and previews are disabled.</div>
+        </div>
+      </div>
+
+      <!-- Search & Connect -->
+      <div id="u-search-section" class="card" style="margin-bottom:1rem;">
+        <div class="panel-title">
+          <div class="chip">SEARCH</div>
+          <h3 style="font-size:14px;font-weight:800;">Search & Connect to a Cloud</h3>
+        </div>
+        <div id="u-serr" class="err hidden"></div>
+        <div id="u-sok" class="ok hidden"></div>
+        <div class="glass-row" style="margin-bottom:10px;">
+          <div class="glass-highlight">Private vault mode</div>
+          <div class="glass-copy">Each login gets its own folder inside the cloud. You only see files uploaded from your
+            own account, and other users cannot browse your vault.</div>
+        </div>
+        <div style="display:flex;gap:8px;margin-bottom:10px;">
+          <input id="u-search" placeholder="Type cloud name..." oninput="searchClouds()" />
+          <button class="btn" onclick="searchClouds()">Search</button>
+        </div>
+        <div id="u-results"></div>
+        <div id="u-connect-form" class="hidden divider-top">
+          <p class="meta-line-lg" style="margin-bottom:8px;">Connecting to: <strong id="u-connecting-to"></strong></p>
+          <div style="display:flex;gap:8px;">
+            <input id="u-cpass" type="password" placeholder="Enter cloud password" />
+            <button class="btn btn-green" onclick="connectCloud()">Connect</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Files Section -->
+      <div id="u-files-section" class="hidden">
+        <!-- Storage bar -->
+        <div class="card" style="margin-bottom:1rem;">
+          <div class="stats-grid">
+            <div class="stats-card">
+              <div class="stats-label">Cloud usage</div>
+              <div id="u-cloud-used" class="stats-value">0 B</div>
+              <div id="u-cloud-sub" class="stats-sub">0 B of 0 B total</div>
+              <div class="usage-track">
+                <div id="u-cloud-bar" class="usage-fill cloud"></div>
+              </div>
+            </div>
+            <div class="stats-card">
+              <div class="stats-label">My uploads</div>
+              <div id="u-user-used" class="stats-value">0 B</div>
+              <div id="u-user-sub" class="stats-sub">0 files in your vault</div>
+              <div class="usage-track">
+                <div id="u-user-bar" class="usage-fill user"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+
+        <!-- Upload -->
+        <div id="u-drop" class="upload-picker"
+          style="margin-bottom:1rem;cursor:pointer;transition:border-color .2s ease, box-shadow .2s ease, transform .2s ease;"
+          onclick="openUploadPicker(event)"
+          ondragover="event.preventDefault();this.style.borderColor='#B497CF';this.style.boxShadow='0 0 0 4px rgba(46,232,214,.12)'"
+          ondragleave="this.style.borderColor='rgba(40,215,197,.30)';this.style.boxShadow=''"
+          ondrop="handleDrop(event)">
+          <div style="display:flex;align-items:center;gap:12px;flex:1;min-width:220px;">
+            <div
+              style="width:48px;height:48px;border-radius:16px;background:linear-gradient(135deg,#28d7c5,#78a6ff);display:flex;align-items:center;justify-content:center;font-size:22px;flex:0 0 auto;">
+              📤</div>
+            <div>
+              <div class="surface-heading">Upload from phone or laptop</div>
+              <p class="text-muted">Tap Select files to open your gallery or Files app. Drag and drop still works on
+                desktop.</p>
+            </div>
+          </div>
+          <div class="upload-actions">
+            <input id="u-finput" type="file" multiple onchange="uploadFiles(this.files)" />
+            <button class="btn btn-green" type="button"
+              onclick="event.stopPropagation(); document.getElementById('u-finput').click()">Select files</button>
+          </div>
+        </div>
+        <div id="upload-progress" class="hidden upload-progress" style="margin-bottom:10px;">
+          <div class="upload-progress-top">
+            <span id="upload-progress-label">Preparing upload</span>
+            <span id="upload-progress-percent">0%</span>
+          </div>
+          <div class="upload-track">
+            <div id="upload-progress-bar" class="upload-bar"></div>
+          </div>
+        </div>
+
+        <!-- Filter -->
+        <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap;">
+          <button class="tab active" id="uf-all" onclick="uFilter('all')">All</button>
+          <button class="tab" id="uf-image" onclick="uFilter('image')">🖼️ Photos</button>
+          <button class="tab" id="uf-video" onclick="uFilter('video')">🎬 Videos</button>
+          <button class="tab" id="uf-doc" onclick="uFilter('doc')">📄 Docs</button>
+          <button class="tab" id="uf-other" onclick="uFilter('other')">📁 Other</button>
+        </div>
+
+        <div id="u-filelist" style="display:flex;flex-direction:column;gap:8px;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PROFILE DASHBOARD -->
+  <div id="pg-profile" class="hidden page-shell" style="min-height:100vh;display:flex;flex-direction:column;">
+    <div class="topbar">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div class="brand-mark">☁️</div>
+        <span class="brand-name">Profile</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;justify-content:flex-end;">
+        <button class="btn btn-sm theme-toggle-btn" onclick="toggleTheme()" aria-label="Toggle theme" title="Toggle theme">
+          <span class="theme-icon-label">🌙</span>
+        </button>
+        <button class="btn btn-sm btn-purple" onclick="goto('pg-user')">Back to Vault</button>
+      </div>
+    </div>
+    <div class="screen-shell" style="padding:1.25rem;flex:1;width:100%;">
+      <div class="screen-banner" style="align-items: center; margin-bottom: 2rem;">
+        <div style="display: flex; align-items: center; gap: 20px;">
+          <div
+            style="width: 64px; height: 64px; border-radius: 50%; background: linear-gradient(135deg, #ffffff, #9b72cb); display: flex; align-items: center; justify-content: center; font-size: 26px; font-weight: bold; box-shadow: 0 8px 24px rgba(155, 114, 203, 0.3);">
+            👤
+          </div>
+          <div>
+            <div class="section-title" id="p-username" style="font-size: 24px; font-weight: 900;">...</div>
+            <div class="section-sub" id="p-joined">Joined ...</div>
+          </div>
+        </div>
+        <div class="glow-pill"><span class="pulse-dot"></span> Active User</div>
+      </div>
+      <div class="card" style="margin-bottom:1rem; margin-top: 1rem;">
+        <div class="panel-title">
+          <div class="chip">VAULT</div>
+          <h3 style="font-size:14px;font-weight:800;">Connected Cloud</h3>
+        </div>
+        <div class="glass-row" style="margin-bottom:10px;">
+          <div class="glass-highlight" id="p-cloud">...</div>
+          <div class="glass-copy">This is your currently active workspace. Files uploaded here are private to your
+            vault.</div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom:1rem;">
+        <div class="panel-title">
+          <div class="chip">ABOUT ME</div>
+          <h3 style="font-size:14px;font-weight:800;">User Description</h3>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+          <textarea id="p-bio" rows="2" placeholder="Add a short bio about yourself..." style="width: 100%; resize: none; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 10px 14px; color: var(--text); font-size: 13px;" oninput="saveBio()"></textarea>
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom:1rem;">
+        <div class="panel-title">
+          <div class="chip">ANALYTICS</div>
+          <h3 style="font-size:14px;font-weight:800;">Storage Breakdown</h3>
+        </div>
+        <div id="p-storage-bar-container" style="display:flex; height:12px; border-radius:6px; overflow:hidden; background:rgba(255,255,255,0.05); margin-bottom:14px;">
+          <!-- Segmented breakdown bars injected here -->
+        </div>
+        <div id="p-storage-legend" style="display:grid; grid-template-columns: repeat(2, 1fr); gap:10px; font-size:12px; color:var(--text-soft);">
+          <!-- Details for photos, videos, docs, others -->
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom:1rem;">
+        <div class="panel-title">
+          <div class="chip">SECURITY</div>
+          <h3 style="font-size:14px;font-weight:800;">Active Sessions</h3>
+        </div>
+        <div class="glass-row" style="margin-bottom:8px; display:flex; justify-content:space-between; align-items:center; padding:10px 14px; border-radius:12px; background:rgba(255,255,255,0.02);">
+          <div>
+            <span style="font-weight:800; font-size:13px; display:block;">macOS Desktop App Frame</span>
+            <span style="font-size:11px; color:var(--muted);">IP: 127.0.0.1 · Active Session</span>
+          </div>
+          <span class="badge badge-purple" style="background:rgba(34,197,94,0.15); color:#86efac; border:none; padding:4px 8px; font-size:10px;">THIS DEVICE</span>
+        </div>
+        <div class="glass-row" style="display:flex; justify-content:space-between; align-items:center; opacity:0.6; padding:10px 14px; border-radius:12px; background:rgba(255,255,255,0.02);">
+          <div>
+            <span style="font-weight:800; font-size:13px; display:block;">Web Portal (Safari)</span>
+            <span style="font-size:11px; color:var(--muted);">IP: 192.168.1.4 · 2 hours ago</span>
+          </div>
+          <span class="badge" style="font-size:10px; padding:4px 8px; background:rgba(255,255,255,0.05); color:var(--text-soft);">INACTIVE</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SETTINGS DASHBOARD -->
+  <div id="pg-settings" class="hidden page-shell" style="min-height:100vh;display:flex;flex-direction:column;">
+    <div class="topbar">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div class="brand-mark">☁️</div>
+        <span class="brand-name">Settings</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;justify-content:flex-end;">
+        <button class="btn btn-sm theme-toggle-btn" onclick="toggleTheme()" aria-label="Toggle theme" title="Toggle theme">
+          <span class="theme-icon-label">🌙</span>
+        </button>
+        <button class="btn btn-sm btn-purple" onclick="goto('pg-user')">Back to Vault</button>
+      </div>
+    </div>
+    <div class="screen-shell" style="padding:1.25rem;flex:1;width:100%;">
+      <div class="screen-banner">
+        <div>
+          <div class="section-title">Account Preferences</div>
+          <div class="section-sub">Manage your security, appearance, and connections.</div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top: 1rem; margin-bottom: 1rem;">
+        <div class="panel-title">
+          <div class="chip">SECURITY</div>
+          <h3 style="font-size:14px;font-weight:800;">Change Password</h3>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 10px; max-width: 400px;">
+          <input id="p-settings-pass1" type="password" placeholder="New password" />
+          <input id="p-settings-pass2" type="password" placeholder="Confirm password" />
+          <button class="btn btn-green" onclick="submitChangePasswordPage()">Update Password</button>
+          <div id="p-settings-err" class="err hidden"></div>
+          <div id="p-settings-ok" class="ok hidden"></div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom: 1rem;">
+        <div class="panel-title">
+          <div class="chip">PREFERENCES</div>
+          <h3 style="font-size:14px;font-weight:800;">Sync & Connections</h3>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 14px;">
+          <div>
+            <label style="display:block; font-size:12px; font-weight:700; color:var(--text-soft); margin-bottom:6px;">Default Sync Location</label>
+            <input id="s-sync-path" type="text" placeholder="/Users/username/MyCloudSync" style="width:100%;" onchange="saveSetting('sync-path', this.value)" />
+          </div>
+          
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap:12px;">
+            <div>
+              <label style="display:block; font-size:12px; font-weight:700; color:var(--text-soft); margin-bottom:6px;">Sync Frequency</label>
+              <select id="s-sync-freq" class="form-select" style="width:100%;" onchange="saveSetting('sync-freq', this.value)">
+                <option value="realtime">Real-time (Auto)</option>
+                <option value="5m">Every 5 minutes</option>
+                <option value="30m">Every 30 minutes</option>
+                <option value="1h">Every hour</option>
+              </select>
+            </div>
+            <div>
+              <label style="display:block; font-size:12px; font-weight:700; color:var(--text-soft); margin-bottom:6px;">Bandwidth Limit</label>
+              <select id="s-speed-limit" class="form-select" style="width:100%;" onchange="saveSetting('speed-limit', this.value)">
+                <option value="unlimited">Unlimited speed</option>
+                <option value="10">Limit to 10 MB/s</option>
+                <option value="5">Limit to 5 MB/s</option>
+                <option value="1">Limit to 1 MB/s</option>
+              </select>
+            </div>
+          </div>
+          
+          <div style="display:flex; align-items:center; gap:8px; margin-top:4px;">
+            <input id="s-autoconnect" type="checkbox" style="width:16px; height:16px; margin:0;" onchange="saveSetting('autoconnect', this.checked)" />
+            <span style="font-size:13px; font-weight:600; color:var(--text-soft);">Connect to vault automatically on startup</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom: 1rem;">
+        <div class="panel-title">
+          <div class="chip">SYSTEM</div>
+          <h3 style="font-size:14px;font-weight:800;">Desktop Integrations</h3>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+          <div style="display:flex; align-items:center; gap:8px;">
+            <input id="s-notify" type="checkbox" style="width:16px; height:16px; margin:0;" onchange="saveSetting('notify', this.checked)" />
+            <span style="font-size:13px; font-weight:600; color:var(--text-soft);">Show desktop notifications for file uploads/downloads</span>
+          </div>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <input id="s-launch" type="checkbox" style="width:16px; height:16px; margin:0;" onchange="saveSetting('launch', this.checked)" />
+            <span style="font-size:13px; font-weight:600; color:var(--text-soft);">Launch MyCloud Desktop automatically on system login</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom: 1rem;">
+        <div class="panel-title">
+          <div class="chip">APPEARANCE</div>
+          <h3 style="font-size:14px;font-weight:800;">Theme</h3>
+        </div>
+        <button class="btn" onclick="toggleTheme()" style="width: 200px;">Toggle Light / Dark Mode</button>
+      </div>
+
+      <div class="card" style="border: 1px solid rgba(239,68,68,0.3); background: rgba(239,68,68,0.05);">
+        <div class="panel-title">
+          <div class="chip" style="background: rgba(239,68,68,0.2); color: #fca5a5;">DANGER ZONE</div>
+          <h3 style="font-size:14px;font-weight:800;color:#fca5a5;">Destructive Actions</h3>
+        </div>
+        <div style="display: flex; gap: 10px;">
+          <button class="btn btn-purple" onclick="disconnectCloud(); goto('pg-user');">Disconnect Vault</button>
+          <button class="btn btn-red" onclick="api('/api/user/logout','POST').then(()=>goto('pg-landing'))">Sign
+            Out</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- App Dock (Fixed to viewport) -->
+  <div id="app-dock" class="dock-outer hidden">
+    <div class="dock-panel" role="toolbar" aria-label="Application dock">
+
+      <button class="dock-item" onclick="goto('pg-user'); uFilter('all')">
+        <span class="icon-btn__back"
+          style="background: linear-gradient(135deg, #ffffff, #9b72cb);"></span>
+        <span class="icon-btn__front">
+          <span class="icon-btn__icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24">
+              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+              <polyline points="9 22 9 12 15 12 15 22"></polyline>
+            </svg>
+          </span>
+        </span>
+        <div class="dock-label">Home</div>
+      </button>
+
+      <button class="dock-item" onclick="goto('pg-user'); uFilter('doc')">
+        <span class="icon-btn__back"
+          style="background: linear-gradient(135deg, #ffffff, #9b72cb);"></span>
+        <span class="icon-btn__front">
+          <span class="icon-btn__icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24">
+              <polyline points="21 8 21 21 3 21 3 8"></polyline>
+              <rect x="1" y="3" width="22" height="5"></rect>
+              <line x1="10" y1="12" x2="14" y2="12"></line>
+            </svg>
+          </span>
+        </span>
+        <div class="dock-label">Archive</div>
+      </button>
+
+      <button class="dock-item" onclick="openProfile()">
+        <span class="icon-btn__back" style="background: linear-gradient(135deg, #ffffff, #9b72cb);"></span>
+        <span class="icon-btn__front">
+          <span class="icon-btn__icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+              <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+          </span>
+        </span>
+        <div class="dock-label">Profile</div>
+      </button>
+
+      <button class="dock-item" onclick="openSettings()">
+        <span class="icon-btn__back"
+          style="background: linear-gradient(135deg, #ffffff, #9b72cb);"></span>
+        <span class="icon-btn__front">
+          <span class="icon-btn__icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24">
+              <circle cx="12" cy="12" r="3"></circle>
+              <path
+                d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z">
+              </path>
+            </svg>
+          </span>
+        </span>
+        <div class="dock-label">Settings</div>
+      </button>
+
+    </div>
+  </div>
+
+
+  <div id="preview-modal" class="preview-modal hidden" onclick="closePreview(event)">
+    <div class="preview-shell" onclick="event.stopPropagation()">
+      <div class="preview-head">
+        <div style="min-width:0;">
+          <div class="preview-head-sub">File preview</div>
+          <div id="preview-title" class="preview-head-title">Preview</div>
+          <div id="preview-meta" class="preview-head-sub"></div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;">
+          <button class="btn btn-sm btn-purple" onclick="downloadPreviewFile()">Download</button>
+          <button class="btn btn-red btn-sm" onclick="closePreview()">Close</button>
+        </div>
+      </div>
+      <div id="preview-slot"></div>
+      <div class="preview-foot">Preview is shown inline when your browser supports the file type. If it does not render,
+        use Download. This view supports images, videos, and browser-readable documents from your private vault.</div>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+  <script>
+    class DotField {
+      constructor(options) {
+        this.canvas = document.getElementById(options.canvasId);
+        this.glowEl = document.getElementById(options.glowId);
+        if (!this.canvas) return;
+        this.ctx = this.canvas.getContext('2d', { alpha: true });
+        
+        this.dotRadius = options.dotRadius || 1.5;
+        this.dotSpacing = options.dotSpacing || 14;
+        this.cursorRadius = options.cursorRadius || 500;
+        this.cursorForce = options.cursorForce || 0.1;
+        this.bulgeOnly = options.bulgeOnly !== undefined ? options.bulgeOnly : true;
+        this.bulgeStrength = options.bulgeStrength || 67;
+        this.glowRadius = options.glowRadius || 160;
+        this.sparkle = options.sparkle || false;
+        this.waveAmplitude = options.waveAmplitude || 0;
+        this.gradientFrom = options.gradientFrom || 'rgba(168, 85, 247, 0.35)';
+        this.gradientTo = options.gradientTo || 'rgba(180, 151, 207, 0.25)';
+        
+        this.dots = [];
+        this.mouse = { x: -9999, y: -9999, prevX: -9999, prevY: -9999, speed: 0 };
+        this.size = { w: 0, h: 0, offsetX: 0, offsetY: 0 };
+        this.glowOpacity = 0;
+        this.engagement = 0;
+        this.frameCount = 0;
+        this.dpr = Math.min(window.devicePixelRatio || 1, 2);
+        
+        this.init();
+      }
+      
+      init() {
+        this.resize = this.resize.bind(this);
+        this.onMouseMove = this.onMouseMove.bind(this);
+        this.tick = this.tick.bind(this);
+        this.updateMouseSpeed = this.updateMouseSpeed.bind(this);
+        
+        window.addEventListener('resize', this.resize);
+        window.addEventListener('mousemove', this.onMouseMove, { passive: true });
+        
+        this.resize();
+        
+        this.speedInterval = setInterval(this.updateMouseSpeed, 20);
+        this.raf = requestAnimationFrame(this.tick);
+      }
+      
+      resize() {
+        const rect = this.canvas.parentElement.getBoundingClientRect();
+        const w = rect.width;
+        const h = rect.height;
+        
+        this.canvas.width = w * this.dpr;
+        this.canvas.height = h * this.dpr;
+        this.canvas.style.width = `${w}px`;
+        this.canvas.style.height = `${h}px`;
+        this.ctx.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
+        
+        this.size = {
+          w,
+          h,
+          offsetX: rect.left + window.scrollX,
+          offsetY: rect.top + window.scrollY,
+        };
+        
+        this.buildDots(w, h);
+      }
+      
+      buildDots(w, h) {
+        const step = this.dotRadius + this.dotSpacing;
+        const cols = Math.floor(w / step);
+        const rows = Math.floor(h / step);
+        const padX = (w % step) / 2;
+        const padY = (h % step) / 2;
+        const dots = new Array(rows * cols);
+        let idx = 0;
+        
+        for (let row = 0; row < rows; row++) {
+          for (let col = 0; col < cols; col++) {
+            const ax = padX + col * step + step / 2;
+            const ay = padY + row * step + step / 2;
+            dots[idx++] = { ax, ay, sx: ax, sy: ay, vx: 0, vy: 0, x: ax, y: ay };
+          }
+        }
+        this.dots = dots;
+      }
+      
+      onMouseMove(e) {
+        this.mouse.x = e.pageX - this.size.offsetX;
+        this.mouse.y = e.pageY - this.size.offsetY;
+      }
+      
+      updateMouseSpeed() {
+        const m = this.mouse;
+        const dx = m.prevX - m.x;
+        const dy = m.prevY - m.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        m.speed += (dist - m.speed) * 0.5;
+        if (m.speed < 0.001) m.speed = 0;
+        m.prevX = m.x;
+        m.prevY = m.y;
+      }
+      
+      tick() {
+        this.frameCount++;
+        const dots = this.dots;
+        const m = this.mouse;
+        const { w, h } = this.size;
+        const len = dots.length;
+        const t = this.frameCount * 0.02;
+        
+        const targetEngagement = Math.min(m.speed / 5, 1);
+        this.engagement += (targetEngagement - this.engagement) * 0.06;
+        if (this.engagement < 0.001) this.engagement = 0;
+        const eng = this.engagement;
+        
+        this.glowOpacity += (eng - this.glowOpacity) * 0.08;
+        
+        if (this.glowEl) {
+          this.glowEl.setAttribute('cx', m.x);
+          this.glowEl.setAttribute('cy', m.y);
+          this.glowEl.style.opacity = this.glowOpacity;
+        }
+        
+        this.ctx.clearRect(0, 0, w, h);
+        
+        const grad = this.ctx.createLinearGradient(0, 0, w, h);
+        grad.addColorStop(0, this.gradientFrom);
+        grad.addColorStop(1, this.gradientTo);
+        this.ctx.fillStyle = grad;
+        
+        const cr = this.cursorRadius;
+        const crSq = cr * cr;
+        const rad = this.dotRadius / 2;
+        const isBulge = this.bulgeOnly;
+        
+        this.ctx.beginPath();
+        
+        for (let i = 0; i < len; i++) {
+          const d = dots[i];
+          if (!d) continue;
+          const dx = m.x - d.ax;
+          const dy = m.y - d.ay;
+          const distSq = dx * dx + dy * dy;
+          
+          if (distSq < crSq && eng > 0.01) {
+            const dist = Math.sqrt(distSq);
+            if (isBulge) {
+              const t = 1 - dist / cr;
+              const push = t * t * this.bulgeStrength * eng;
+              const angle = Math.atan2(dy, dx);
+              d.sx += (d.ax - Math.cos(angle) * push - d.sx) * 0.15;
+              d.sy += (d.ay - Math.sin(angle) * push - d.sy) * 0.15;
+            } else {
+              const angle = Math.atan2(dy, dx);
+              const move = (500 / dist) * (m.speed * this.cursorForce);
+              d.vx += Math.cos(angle) * -move;
+              d.vy += Math.sin(angle) * -move;
+            }
+          } else if (isBulge) {
+            d.sx += (d.ax - d.sx) * 0.1;
+            d.sy += (d.ay - d.sy) * 0.1;
+          }
+          
+          if (!isBulge) {
+            d.vx *= 0.9;
+            d.vy *= 0.9;
+            d.x = d.ax + d.vx;
+            d.y = d.ay + d.vy;
+            d.sx += (d.x - d.sx) * 0.1;
+            d.sy += (d.y - d.sy) * 0.1;
+          }
+          
+          let drawX = d.sx;
+          let drawY = d.sy;
+          if (this.waveAmplitude > 0) {
+            drawY += Math.sin(d.ax * 0.03 + t) * this.waveAmplitude;
+            drawX += Math.cos(d.ay * 0.03 + t * 0.7) * this.waveAmplitude * 0.5;
+          }
+          
+          if (this.sparkle) {
+            const hash = ((i * 2654435761) ^ (this.frameCount >> 3)) >>> 0;
+            if ((hash % 100) < 3) {
+              this.ctx.moveTo(drawX + rad * 1.8, drawY);
+              this.ctx.arc(drawX, drawY, rad * 1.8, 0, Math.PI * 2);
+            } else {
+              this.ctx.moveTo(drawX + rad, drawY);
+              this.ctx.arc(drawX, drawY, rad, 0, Math.PI * 2);
+            }
+          } else {
+            this.ctx.moveTo(drawX + rad, drawY);
+            this.ctx.arc(drawX, drawY, rad, 0, Math.PI * 2);
+          }
+        }
+        
+        this.ctx.fill();
+        this.raf = requestAnimationFrame(this.tick);
+      }
+      
+      destroy() {
+        window.removeEventListener('resize', this.resize);
+        window.removeEventListener('mousemove', this.onMouseMove);
+        clearInterval(this.speedInterval);
+        cancelAnimationFrame(this.raf);
+      }
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      new DotField({
+        canvasId: 'dot-field-canvas',
+        glowId: 'dot-field-glow-circle',
+        dotRadius: 1.5,
+        dotSpacing: 14,
+        bulgeStrength: 67,
+        glowRadius: 160,
+        sparkle: false,
+        waveAmplitude: 0,
+        cursorRadius: 500,
+        cursorForce: 0.1,
+        bulgeOnly: true,
+        gradientFrom: '#A855F7',
+        gradientTo: '#B497CF',
+        glowColor: '#120F17'
+      });
+    });
+
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+    let allUserFiles = [];
+    let currentFilter = 'all';
+    let selectedCloud = null;
+    let currentPreviewFileId = null;
+    let currentPreviewFileType = null;
+
+    function initDock() {
+      const dock = document.querySelector('.dock-panel');
+      if (!dock) return;
+      const items = dock.querySelectorAll('.dock-item');
+      const baseSize = 60;
+      const maxSize = 85;
+      const maxDist = 200;
+
+      dock.addEventListener('mousemove', (e) => {
+        dock.classList.add('is-active');
+        items.forEach(item => {
+          const rect = item.getBoundingClientRect();
+          const centerX = rect.left + rect.width / 2;
+          const distance = Math.abs(e.clientX - centerX);
+
+          if (distance < maxDist) {
+            // ease curve
+            const scale = Math.max(0, 1 - Math.pow(distance / maxDist, 2));
+            const size = baseSize + (maxSize - baseSize) * scale;
+            item.style.width = `${size}px`;
+            item.style.height = `${size}px`;
+          } else {
+            item.style.width = `${baseSize}px`;
+            item.style.height = `${baseSize}px`;
+          }
+        });
+      });
+
+      dock.addEventListener('mouseleave', () => {
+        dock.classList.remove('is-active');
+        items.forEach(item => {
+          item.style.width = `${baseSize}px`;
+          item.style.height = `${baseSize}px`;
+        });
+      });
+    }
+    initDock();
+
+    function applyTheme(theme) {
+      const nextTheme = theme === 'light' ? 'light' : 'dark';
+      document.body.setAttribute('data-theme', nextTheme);
+      localStorage.setItem('mycloud-theme', nextTheme);
+
+      const sunSvg = `<svg class="theme-icon-svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:block;"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>`;
+      const moonSvg = `<svg class="theme-icon-svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:block;"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>`;
+
+      // Update topbar-embedded theme toggle icons with premium transparent vector SVGs
+      document.querySelectorAll('.theme-icon-label').forEach(el => {
+        el.innerHTML = nextTheme === 'light' ? sunSvg : moonSvg;
+      });
+    }
+
+    function toggleTheme() {
+      const current = document.body.getAttribute('data-theme') || 'dark';
+      applyTheme(current === 'dark' ? 'light' : 'dark');
+    }
+
+    applyTheme(localStorage.getItem('mycloud-theme') || 'dark');
+
+    function goto(id) {
+      document.querySelectorAll('body > div:not(.aurora):not([id$="-modal"]):not(#app-dock)').forEach(d => d.classList.add('hidden'));
+      closePreview();
+
+      const page = document.getElementById(id);
+      page.classList.remove('hidden');
+      page.classList.remove('page-shell');
+      void page.offsetWidth;
+      page.classList.add('page-shell');
+
+      const dock = document.getElementById('app-dock');
+      if (dock) {
+        if (id === 'pg-user' || id === 'pg-profile' || id === 'pg-settings') {
+          dock.classList.remove('hidden');
+        } else {
+          dock.classList.add('hidden');
+        }
+      }
+    }
+
+    async function api(url, method = 'GET', body = null) {
+      const opts = { method, headers: { 'Content-Type': 'application/json' }, credentials: 'include' };
+      if (body) opts.body = JSON.stringify(body);
+      const res = await fetch(url, opts);
+      return res.json();
+    }
+
+    function emptyState(icon, title, sub) {
+      return `<div class="empty-state"><div class="empty-state-icon">${icon}</div><div class="empty-state-title">${title}</div><div class="empty-state-sub">${sub}</div></div>`;
+    }
+    function showErr(id, msg) { const e = document.getElementById(id); e.textContent = msg; e.classList.remove('hidden'); }
+    function showOk(id, msg) { const e = document.getElementById(id); e.textContent = msg; e.classList.remove('hidden'); }
+    function hideMsg(id) { document.getElementById(id).classList.add('hidden'); }
+
+    /* Pages Navigation */
+    function openProfile() {
+      goto('pg-profile');
+      api('/api/user/profile').then(res => {
+        if (res.ok) {
+          document.getElementById('p-username').textContent = res.username;
+          const joined = new Date(res.joined_at);
+          document.getElementById('p-joined').textContent = 'Joined ' + joined.toLocaleDateString();
+          document.getElementById('p-cloud').textContent = res.connected_cloud || 'None';
+        }
+      });
+
+      // Load Profile Bio
+      const bioInput = document.getElementById('p-bio');
+      if (bioInput) {
+        bioInput.value = localStorage.getItem('mycloud-profile-bio') || '';
+      }
+
+      // Render Storage Breakdown
+      renderProfileStorageBreakdown();
+    }
+
+    function saveBio() {
+      const val = document.getElementById('p-bio').value;
+      localStorage.setItem('mycloud-profile-bio', val);
+    }
+
+    function renderProfileStorageBreakdown() {
+      const container = document.getElementById('p-storage-bar-container');
+      const legend = document.getElementById('p-storage-legend');
+      if (!container || !legend) return;
+
+      let photos = 0, videos = 0, docs = 0, others = 0;
+      allUserFiles.forEach(f => {
+        if (f.file_type === 'image') photos += f.size;
+        else if (f.file_type === 'video') videos += f.size;
+        else if (f.file_type === 'doc') docs += f.size;
+        else others += f.size;
+      });
+
+      const total = photos + videos + docs + others;
+      if (total === 0) {
+        container.innerHTML = `<div style="width:100%; height:100%; background:rgba(255,255,255,0.03); display:flex; align-items:center; justify-content:center; font-size:11px; color:var(--muted);">No files stored yet</div>`;
+        legend.innerHTML = `
+          <div style="display:flex; align-items:center; gap:6px;"><span style="width:8px; height:8px; border-radius:50%; background:#22c55e;"></span> Photos: 0 B (0%)</div>
+          <div style="display:flex; align-items:center; gap:6px;"><span style="width:8px; height:8px; border-radius:50%; background:#a855f7;"></span> Videos: 0 B (0%)</div>
+          <div style="display:flex; align-items:center; gap:6px;"><span style="width:8px; height:8px; border-radius:50%; background:#3b82f6;"></span> Docs: 0 B (0%)</div>
+          <div style="display:flex; align-items:center; gap:6px;"><span style="width:8px; height:8px; border-radius:50%; background:#eab308;"></span> Others: 0 B (0%)</div>
+        `;
+        return;
+      }
+
+      const pPhotos = (photos / total) * 100;
+      const pVideos = (videos / total) * 100;
+      const pDocs = (docs / total) * 100;
+      const pOthers = (others / total) * 100;
+
+      container.innerHTML = `
+        <div style="width:${pPhotos}%; height:100%; background:#22c55e; transition:width 0.3s;" title="Photos"></div>
+        <div style="width:${pVideos}%; height:100%; background:#a855f7; transition:width 0.3s;" title="Videos"></div>
+        <div style="width:${pDocs}%; height:100%; background:#3b82f6; transition:width 0.3s;" title="Documents"></div>
+        <div style="width:${pOthers}%; height:100%; background:#eab308; transition:width 0.3s;" title="Others"></div>
+      `;
+
+      legend.innerHTML = `
+        <div style="display:flex; align-items:center; gap:6px;"><span style="width:8px; height:8px; border-radius:50%; background:#22c55e;"></span> Photos: ${fmtSize(photos)} (${pPhotos.toFixed(1)}%)</div>
+        <div style="display:flex; align-items:center; gap:6px;"><span style="width:8px; height:8px; border-radius:50%; background:#a855f7;"></span> Videos: ${fmtSize(videos)} (${pVideos.toFixed(1)}%)</div>
+        <div style="display:flex; align-items:center; gap:6px;"><span style="width:8px; height:8px; border-radius:50%; background:#3b82f6;"></span> Docs: ${fmtSize(docs)} (${pDocs.toFixed(1)}%)</div>
+        <div style="display:flex; align-items:center; gap:6px;"><span style="width:8px; height:8px; border-radius:50%; background:#eab308;"></span> Others: ${fmtSize(others)} (${pOthers.toFixed(1)}%)</div>
+      `;
+    }
+
+    function openSettings() {
+      goto('pg-settings');
+      hideMsg('p-settings-err');
+      hideMsg('p-settings-ok');
+      document.getElementById('p-settings-pass1').value = '';
+      document.getElementById('p-settings-pass2').value = '';
+
+      // Load Settings input states from localStorage
+      document.getElementById('s-sync-path').value = localStorage.getItem('mycloud-setting-sync-path') || '/Users/vishnuvikas/Downloads/MyCloudSync';
+      document.getElementById('s-sync-freq').value = localStorage.getItem('mycloud-setting-sync-freq') || 'realtime';
+      document.getElementById('s-speed-limit').value = localStorage.getItem('mycloud-setting-speed-limit') || 'unlimited';
+      document.getElementById('s-autoconnect').checked = localStorage.getItem('mycloud-setting-autoconnect') === 'true';
+      document.getElementById('s-notify').checked = localStorage.getItem('mycloud-setting-notify') === 'true';
+      document.getElementById('s-launch').checked = localStorage.getItem('mycloud-setting-launch') === 'true';
+    }
+
+    function saveSetting(key, val) {
+      localStorage.setItem('mycloud-setting-' + key, val);
+      showToast('⚙️', `Preference updated!`);
+    }
+
+    function showToast(icon, title, duration = 2500) {
+      let container = document.getElementById('toast-container');
+      if (!container) {
+        container = document.createElement('div');
+        container.id = 'toast-container';
+        container.className = 'toast-container';
+        document.body.appendChild(container);
+      }
+      const t = document.createElement('div');
+      t.className = 'toast';
+      t.innerHTML = `<span class="toast-icon">${icon}</span> <span>${title}</span>`;
+      container.appendChild(t);
+      setTimeout(() => t.classList.add('show'), 10);
+      setTimeout(() => {
+        t.classList.remove('show');
+        setTimeout(() => t.remove(), 300);
+      }, duration);
+    }
+    async function submitChangePasswordPage() {
+      const p1 = document.getElementById('p-settings-pass1').value;
+      const p2 = document.getElementById('p-settings-pass2').value;
+      if (!p1 || p1 !== p2) return showErr('p-settings-err', 'Passwords do not match');
+      hideMsg('p-settings-err');
+
+      const res = await api('/api/user/change_password', 'POST', { password: p1 });
+      if (res.error) showErr('p-settings-err', res.error);
+      else {
+        hideMsg('p-settings-err');
+        showOk('p-settings-ok', 'Password updated successfully!');
+        document.getElementById('p-settings-pass1').value = '';
+        document.getElementById('p-settings-pass2').value = '';
+      }
+    }
+
+    function openUploadPicker(event) {
+      if (event.target !== event.currentTarget) return;
+      document.getElementById('u-finput').click();
+    }
+
+    function setConnectedWorkspace(cloudName) {
+      document.getElementById('u-cloud-name').textContent = cloudName;
+      document.getElementById('u-search-section').classList.add('hidden');
+      document.getElementById('u-files-section').classList.remove('hidden');
+    }
+
+    function setDisconnectedWorkspace(message) {
+      selectedCloud = null;
+      allUserFiles = [];
+      currentFilter = 'all';
+      document.getElementById('u-cloud-name').textContent = 'No cloud connected';
+      document.getElementById('u-search-section').classList.remove('hidden');
+      document.getElementById('u-files-section').classList.add('hidden');
+      document.getElementById('u-connect-form').classList.add('hidden');
+      document.getElementById('u-results').innerHTML = '';
+      document.getElementById('u-filelist').innerHTML = '';
+      document.getElementById('u-search').value = '';
+      document.getElementById('u-cpass').value = '';
+      hideMsg('u-serr');
+      showOk('u-sok', message || 'Disconnected. Connect to another cloud to continue.');
+    }
+
+    async function disconnectCloud() {
+      hideMsg('u-serr'); hideMsg('u-sok');
+      const r = await api('/api/user/disconnect', 'POST');
+      if (r.success) {
+        setDisconnectedWorkspace('Disconnected. Pick another cloud when you are ready.');
+        closePreview();
+      } else {
+        showErr('u-serr', r.message || 'Unable to disconnect right now');
+      }
+    }
+
+    function renderDemoPreview(meta) {
+      const slot = document.getElementById('preview-slot');
+      document.getElementById('preview-meta').textContent =
+        `${meta.file_type.toUpperCase()} · ${fmtSize(meta.size)} · ${meta.uploaded_at} · demo`;
+      if (meta.file_type === 'image') {
+        slot.innerHTML = `<img class="preview-image" alt="${meta.original_name.replace(/"/g, '&quot;')}"
+      src="https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=1600&q=80" />`;
+      } else if (meta.file_type === 'video') {
+        slot.innerHTML = `<video class="preview-video" controls playsinline preload="metadata"
+      src="https://www.w3schools.com/html/mov_bbb.mp4"></video>`;
+      } else {
+        slot.innerHTML = `
+      <div class="card" style="margin:0;">
+        <div style="font-weight:800;margin-bottom:6px;">${meta.original_name}</div>
+        <div class="text-muted" style="font-size:12px;line-height:1.6;">
+          This is a demo preview. Connect a backend to see the real document inline.
+        </div>
+      </div>`;
+      }
+    }
+
+    function previewFile(id, title) {
+      currentPreviewFileId = id;
+      document.getElementById('preview-title').textContent = title;
+      document.getElementById('preview-meta').textContent = 'Loading preview...';
+      document.getElementById('preview-slot').innerHTML = '<div class="card" style="margin:0;">Loading preview...</div>';
+      const modal = document.getElementById('preview-modal');
+      modal.classList.remove('hidden');
+      modal.style.display = 'flex';
+
+      // Demo files (no backend) — render an inline demo preview immediately.
+      const demo = (typeof DEMO_USER_FILES !== 'undefined')
+        ? DEMO_USER_FILES.find(f => String(f.id) === String(id))
+        : null;
+      if (demo) {
+        currentPreviewFileType = demo.file_type;
+        renderDemoPreview(demo);
+        return;
+      }
+
+      fetch('/api/user/files/' + id + '/preview-meta', { credentials: 'include' })
+        .then(r => r.json())
+        .then(meta => {
+          if (!meta || meta.error) throw new Error(meta.error || 'Unable to load preview metadata');
+          currentPreviewFileType = meta.file_type;
+          document.getElementById('preview-meta').textContent = `${meta.file_type.toUpperCase()} · ${fmtSize(meta.size)} · ${meta.uploaded_at}`;
+          const url = '/api/user/files/' + id + '/preview';
+          const ext = (meta.original_name.split('.').pop() || '').toLowerCase();
+          const isVideo = meta.file_type === 'video' || ['mp4', 'mov', 'webm', 'mkv', 'avi', 'm4v', '3gp'].includes(ext);
+          const isImage = meta.file_type === 'image' || ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp'].includes(ext);
+          const isText = ['txt', 'csv'].includes(ext);
+          const isDocLike = meta.file_type === 'doc' && !isText;
+          if (ext === 'pdf') {
+            document.getElementById('preview-slot').innerHTML = `
+          <div style="width:100%; height:min(74vh,720px); overflow:auto; background:#fff; display:flex; justify-content:center; align-items:flex-start;">
+            <canvas id="pdf-canvas"></canvas>
+          </div>
+        `;
+            pdfjsLib.getDocument(url).promise.then(function (pdf) {
+              pdf.getPage(1).then(function (page) {
+                const canvas = document.getElementById('pdf-canvas');
+                if (!canvas) return;
+                const context = canvas.getContext('2d');
+                const viewport = page.getViewport({ scale: 1.5 });
+                canvas.height = viewport.height;
+                canvas.width = viewport.width;
+                page.render({ canvasContext: context, viewport: viewport });
+              });
+            }).catch(err => {
+              document.getElementById('preview-slot').innerHTML = `
+            <div class="card" style="margin:0;">
+              <div style="font-weight:800;margin-bottom:6px;">Unable to render PDF</div>
+              <div class="text-muted" style="font-size:12px;line-height:1.6;">Use the Download button to view this file.</div>
+            </div>`;
+            });
+          } else if (isImage) {
+            document.getElementById('preview-slot').innerHTML = `<img class="preview-image" src="${url}" alt="${meta.original_name.replace(/"/g, '&quot;')}" />`;
+          } else if (isVideo) {
+            document.getElementById('preview-slot').innerHTML = `<video class="preview-video" controls playsinline preload="metadata" src="${url}"></video>`;
+          } else if (isDocLike || isText) {
+            document.getElementById('preview-slot').innerHTML = `<iframe id="preview-frame" class="preview-frame" src="${url}" title="${meta.original_name.replace(/"/g, '&quot;')}"></iframe>`;
+          } else {
+            document.getElementById('preview-slot').innerHTML = `
+          <div class="card" style="margin:0;">
+            <div style="font-weight:800;margin-bottom:6px;">Preview not available for this file type</div>
+            <div class="text-muted" style="font-size:12px;line-height:1.6;">Use Download to open it locally. Supported previews are images and most browser-readable documents.</div>
+          </div>`;
+          }
+        })
+        .catch(() => {
+          document.getElementById('preview-meta').textContent = '';
+          document.getElementById('preview-slot').innerHTML = `
+        <div class="card" style="margin:0;">
+          <div style="font-weight:800;margin-bottom:6px;">Preview unavailable</div>
+          <div class="text-muted" style="font-size:12px;line-height:1.6;">Backend not reachable. The popup is open — connect a backend or use a demo file to see content here.</div>
+        </div>`;
+        });
+    }
+
+    function closePreview(event) {
+      if (event && event.target !== event.currentTarget) return;
+      const modal = document.getElementById('preview-modal');
+      modal.classList.add('hidden');
+      modal.style.display = '';
+      document.getElementById('preview-slot').innerHTML = '';
+      document.getElementById('preview-meta').textContent = '';
+      currentPreviewFileId = null;
+      currentPreviewFileType = null;
+    }
+
+    function downloadPreviewFile() {
+      if (!currentPreviewFileId) return;
+      window.location.href = '/api/user/files/' + currentPreviewFileId + '/download';
+    }
+
+    function setUploadProgress(percent, label, isError = false) {
+      const panel = document.getElementById('upload-progress');
+      const bar = document.getElementById('upload-progress-bar');
+      const percentLabel = document.getElementById('upload-progress-percent');
+      const textLabel = document.getElementById('upload-progress-label');
+      panel.classList.remove('hidden');
+      panel.classList.toggle('upload-error', !!isError);
+      textLabel.textContent = label;
+      percentLabel.textContent = `${Math.max(0, Math.min(100, percent || 0))}%`;
+      bar.style.width = `${Math.max(0, Math.min(100, percent || 0))}%`;
+    }
+
+    // ── ADMIN ──
+    function toggleAdminAuth(isRegister) {
+      hideMsg('al-err');
+      hideMsg('ar-err');
+      hideMsg('ar-ok');
+      document.getElementById('admin-login-view').classList.toggle('hidden', isRegister);
+      document.getElementById('admin-register-view').classList.toggle('hidden', !isRegister);
+    }
+
+    async function adminLogin() {
+      hideMsg('al-err');
+      const r = await api('/api/admin/login', 'POST', {
+        username: document.getElementById('al-user').value.trim(),
+        password: document.getElementById('al-pass').value
+      });
+      if (r.success) {
+        goto('pg-admin');
+        loadAdminClouds();
+        loadAdminUsers();
+        refreshUSBDrives();
+        updateServerSharingInfo();
+      }
+      else showErr('al-err', r.message || 'Wrong credentials');
+    }
+
+    async function adminRegister() {
+      hideMsg('ar-err'); hideMsg('ar-ok');
+      const p = document.getElementById('ar-pass').value;
+      const p2 = document.getElementById('ar-pass2').value;
+      if (p !== p2) { showErr('ar-err', 'Passwords do not match'); return; }
+      const r = await api('/api/admin/register', 'POST', {
+        username: document.getElementById('ar-user').value.trim(),
+        password: p
+      });
+      if (r.success) {
+        showOk('ar-ok', 'Admin account created! Redirecting to panel...');
+        document.getElementById('ar-user').value = '';
+        document.getElementById('ar-pass').value = '';
+        document.getElementById('ar-pass2').value = '';
+        setTimeout(() => {
+          goto('pg-admin');
+          loadAdminClouds();
+          loadAdminUsers();
+          refreshUSBDrives();
+          updateServerSharingInfo();
+          toggleAdminAuth(false);
+        }, 1200);
+      } else showErr('ar-err', r.message);
+    }
+
+    async function refreshUSBDrives() {
+      const select = document.getElementById('cc-usb-select');
+      select.innerHTML = '<option value="">Scanning USB drives...</option>';
+
+      let defaultPath = "";
+      try {
+        const status = await api('/api/server/status');
+        if (status && status.storage_path) {
+          defaultPath = status.storage_path;
+        }
+      } catch (err) { }
+
+      try {
+        const drives = await api('/api/admin/usb-drives') || [];
+        let optionsHtml = '';
+
+        // Add default configured storage path if available
+        if (defaultPath) {
+          optionsHtml += `<option value="${defaultPath.replace(/"/g, '&quot;')}">Default Storage (${defaultPath})</option>`;
+        }
+
+        if (drives && Array.isArray(drives)) {
+          drives.forEach(d => {
+            // Avoid duplicate option if it matches default path
+            if (d.path !== defaultPath) {
+              optionsHtml += `<option value="${d.path.replace(/"/g, '&quot;')}">${d.name}</option>`;
+            }
+          });
+        }
+
+        optionsHtml += '<option value="custom">Custom Path...</option>';
+        select.innerHTML = optionsHtml;
+      } catch (err) {
+        let optionsHtml = '';
+        if (defaultPath) {
+          optionsHtml += `<option value="${defaultPath.replace(/"/g, '&quot;')}">Default Storage (${defaultPath})</option>`;
+        }
+        optionsHtml += '<option value="custom">Custom Path...</option>';
+        select.innerHTML = optionsHtml;
+      }
+      onUSBSelectChange();
+    }
+
+    function onUSBSelectChange() {
+      const select = document.getElementById('cc-usb-select');
+      const input = document.getElementById('cc-path');
+      if (select.value === 'custom') {
+        input.classList.remove('hidden');
+      } else {
+        input.classList.add('hidden');
+        input.value = select.value;
+      }
+    }
+
+    function adminTab(t) {
+      ['clouds', 'users', 'files'].forEach(x => {
+        document.getElementById('tc-' + x).classList.add('hidden');
+        document.getElementById('tab-' + x).classList.remove('active');
+      });
+      document.getElementById('tc-' + t).classList.remove('hidden');
+      document.getElementById('tab-' + t).classList.add('active');
+      if (t === 'clouds') { loadAdminClouds(); refreshUSBDrives(); updateServerSharingInfo(); }
+      if (t === 'users') loadAdminUsers();
+      if (t === 'files') loadAdminCloudSelect();
+    }
+
+    async function publishTunnel() {
+      const tunnelEl = document.getElementById('share-tunnel-url');
+      const btn = document.getElementById('btn-copy-tunnel');
+      tunnelEl.innerText = "Publishing tunnel... please wait";
+      tunnelEl.style.color = "var(--accent-2)";
+      btn.disabled = true;
+      btn.innerText = "Connecting...";
+
+      try {
+        const res = await api('/api/tunnel/start', 'POST');
+        if (res && res.success) {
+          tunnelEl.innerText = res.tunnel_url;
+          tunnelEl.style.color = "var(--accent)";
+          btn.disabled = false;
+          btn.innerText = "Copy";
+          btn.className = "btn btn-sm btn-green";
+          btn.onclick = () => copyToClipboard(res.tunnel_url);
+          alert("Tunnel published successfully!");
+        } else {
+          tunnelEl.innerText = "Publishing failed: " + (res ? res.message : "unknown error");
+          tunnelEl.style.color = "var(--danger)";
+          btn.disabled = false;
+          btn.innerText = "Retry";
+          btn.onclick = () => publishTunnel();
+        }
+      } catch (err) {
+        tunnelEl.innerText = "Publishing failed: " + err;
+        tunnelEl.style.color = "var(--danger)";
+        btn.disabled = false;
+        btn.innerText = "Retry";
+        btn.onclick = () => publishTunnel();
+      }
+    }
+
+    async function updateServerSharingInfo() {
+      try {
+        const status = await api('/api/server/status');
+        if (status) {
+          document.getElementById('share-local-ip').innerText = status.local_ip;
+
+          const tunnelEl = document.getElementById('share-tunnel-url');
+          const btn = document.getElementById('btn-copy-tunnel');
+          if (status.tunnel_url) {
+            tunnelEl.innerText = status.tunnel_url;
+            tunnelEl.style.color = "var(--accent)";
+            btn.innerText = "Copy";
+            btn.disabled = false;
+            btn.className = "btn btn-sm btn-green";
+            btn.onclick = () => copyToClipboard(status.tunnel_url);
+          } else {
+            if (!tunnelEl.innerText.includes("Publishing")) {
+              tunnelEl.innerText = "Tunnel not active (click Publish)";
+              tunnelEl.style.color = "var(--muted)";
+              btn.innerText = "Publish";
+              btn.disabled = false;
+              btn.className = "btn btn-sm btn-purple";
+              btn.onclick = () => publishTunnel();
+            }
+          }
+        }
+      } catch (err) {
+        console.error("Failed to load server sharing status:", err);
+      }
+    }
+
+    function copyToClipboard(text) {
+      if (text && !text.includes("Detecting") && !text.includes("offline") && !text.includes("Starting") && !text.includes("click Publish") && !text.includes("Publishing")) {
+        navigator.clipboard.writeText(text).then(() => {
+          alert("Host address copied to clipboard!");
+        }).catch(err => {
+          console.error("Failed to copy text: ", err);
+        });
+      }
+    }
+
+    async function createCloud() {
+      hideMsg('cc-err'); hideMsg('cc-ok');
+      const r = await api('/api/admin/clouds', 'POST', {
+        name: document.getElementById('cc-name').value.trim(),
+        password: document.getElementById('cc-pass').value,
+        storage_path: document.getElementById('cc-path').value.trim(),
+        limit_gb: document.getElementById('cc-limit').value
+      });
+      if (r.success) {
+        showOk('cc-ok', r.message);
+        document.getElementById('cc-name').value = '';
+        document.getElementById('cc-pass').value = '';
+        document.getElementById('cc-path').value = '';
+        loadAdminClouds();
+        refreshUSBDrives();
+      } else showErr('cc-err', r.message);
+    }
+
+    async function loadAdminClouds() {
+      const clouds = await api('/api/admin/clouds');
+      const el = document.getElementById('cloud-list');
+      if (!clouds.length) { el.innerHTML = emptyState('☁️', 'No clouds yet', 'Create your first cloud using the form above.'); return; }
+      el.innerHTML = clouds.map((c, i) => `
+    <div class="card stagger-item" style="margin-bottom:8px;animation-delay:${Math.min(i * 0.05, 0.3)}s; opacity: ${c.is_online ? 1 : 0.7}; border-color: ${c.is_online ? 'rgba(255,255,255,.10)' : 'rgba(255,107,122,.26)'}">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span style="font-size:22px;">${c.is_online ? '☁️' : '🔌'}</span>
+          <div>
+            <p style="font-weight:600;font-size:14px; color: ${c.is_online ? 'var(--text)' : 'var(--danger)'};">${c.name}</p>
+            <p class="meta-line">📂 ${c.storage_path} &nbsp;·&nbsp; ${c.file_count} files &nbsp;·&nbsp; ${fmtSize(c.total_size)} &nbsp;·&nbsp; Limit: ${c.limit_gb}GB</p>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;">
+          ${c.is_online ? '<span class="badge badge-green">Online</span>' : '<span class="badge badge-red" style="background: rgba(255,107,122,.12); color: #ff6b7a; border: 1px solid rgba(255,107,122,.26);">Offline (USB Disconnected)</span>'}
+          <button class="btn btn-red btn-sm" onclick="deleteCloud('${c.name}')">🗑️ Delete</button>
+        </div>
+      </div>
+    </div>`).join('');
+    }
+
+    async function deleteCloud(name) {
+      if (!confirm(`Delete cloud "${name}"? Files on disk are kept.`)) return;
+      await api('/api/admin/clouds/' + encodeURIComponent(name), 'DELETE');
+      loadAdminClouds();
+    }
+
+    async function loadAdminUsers() {
+      const users = await api('/api/admin/users');
+      const el = document.getElementById('users-list');
+      if (!users.length) { el.innerHTML = emptyState('👥', 'No users yet', 'Registered users will appear here once they sign up.'); return; }
+      el.innerHTML = users.map((u, i) => `
+    <div class="card stagger-item" style="margin-bottom:8px;animation-delay:${Math.min(i * 0.05, 0.3)}s;">
+      <div style="display:flex;align-items:center;justify-content:space-between;">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span style="font-size:20px;">👤</span>
+          <div>
+            <p style="font-weight:600;font-size:14px;">${u.username}</p>
+            <p class="meta-line">Cloud: ${u.connected_cloud || 'None'} &nbsp;·&nbsp; Joined: ${u.joined_at}</p>
+          </div>
+        </div>
+        <button class="btn btn-red btn-sm" onclick="deleteUser('${u.username}')">🗑️</button>
+      </div>
+    </div>`).join('');
+    }
+
+    async function deleteUser(username) {
+      if (!confirm(`Remove user "${username}"?`)) return;
+      await api('/api/admin/users/' + encodeURIComponent(username), 'DELETE');
+      loadAdminUsers();
+    }
+
+    async function loadAdminCloudSelect() {
+      const clouds = await api('/api/admin/clouds');
+      const sel = document.getElementById('files-cloud-sel');
+      sel.innerHTML = '<option value="">Select a cloud</option>' +
+        clouds.map(c => `<option value="${c.name}">${c.name}</option>`).join('');
+    }
+
+    async function loadAdminFiles() {
+      const cloud = document.getElementById('files-cloud-sel').value;
+      const el = document.getElementById('admin-files');
+      if (!cloud) { el.innerHTML = ''; return; }
+      const files = await api('/api/admin/files?cloud=' + encodeURIComponent(cloud));
+      if (!files.length) { el.innerHTML = emptyState('📁', 'No files in this cloud', 'Files uploaded by users will show up here.'); return; }
+      el.innerHTML = files.map((f, i) => `
+    <div class="card stagger-item" style="margin-bottom:8px;animation-delay:${Math.min(i * 0.05, 0.3)}s;">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span style="font-size:20px;">${fileEmoji(f.file_type)}</span>
+        <div style="flex:1;min-width:0;">
+          <p style="font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${f.original_name}</p>
+          <p class="meta-line">${fmtSize(f.size)} &nbsp;·&nbsp; by ${f.uploaded_by} &nbsp;·&nbsp; ${f.uploaded_at}</p>
+        </div>
+        <button class="btn btn-red btn-sm" onclick="adminDelFile(${f.id})">🗑️</button>
+      </div>
+    </div>`).join('');
+    }
+
+    async function adminDelFile(id) {
+      await api('/api/admin/files/' + id, 'DELETE');
+      loadAdminFiles();
+    }
+
+    // ── USER ──
+    async function userLogin() {
+      hideMsg('ul-err');
+      const r = await api('/api/user/login', 'POST', {
+        username: document.getElementById('ul-user').value.trim(),
+        password: document.getElementById('ul-pass').value
+      });
+      if (r.success) {
+        document.getElementById('u-username-label').textContent = r.username;
+        if (r.connected_cloud) {
+          goto('pg-user');
+          setConnectedWorkspace(r.connected_cloud);
+          loadUserFiles();
+        } else {
+          goto('pg-user');
+          setDisconnectedWorkspace('Account created. Connect to a cloud to start uploading.');
+        }
+      } else showErr('ul-err', r.message);
+    }
+
+    async function userRegister() {
+      hideMsg('ur-err'); hideMsg('ur-ok');
+      const p = document.getElementById('ur-pass').value;
+      const p2 = document.getElementById('ur-pass2').value;
+      if (p !== p2) { showErr('ur-err', 'Passwords do not match'); return; }
+      const r = await api('/api/user/register', 'POST', {
+        username: document.getElementById('ur-user').value.trim(),
+        password: p
+      });
+      if (r.success) {
+        showOk('ur-ok', 'Account created! Redirecting...');
+        setTimeout(() => {
+          goto('pg-user');
+          document.getElementById('u-username-label').textContent = r.username;
+        }, 1200);
+      } else showErr('ur-err', r.message);
+    }
+
+    async function searchClouds() {
+      const q = document.getElementById('u-search').value.trim();
+      const el = document.getElementById('u-results');
+      document.getElementById('u-connect-form').classList.add('hidden');
+      hideMsg('u-serr'); hideMsg('u-sok');
+      if (!q) { el.innerHTML = ''; return; }
+      const clouds = await api('/api/clouds/search?q=' + encodeURIComponent(q));
+      if (!clouds.length) { el.innerHTML = '<p class="meta-line-lg">No clouds found.</p>'; return; }
+      el.innerHTML = clouds.map((c, i) => `
+    <div class="search-result stagger-item" style="animation-delay:${Math.min(i * 0.05, 0.25)}s; opacity: ${c.is_online ? 1 : 0.75};">
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span style="font-size:18px;">${c.is_online ? '☁️' : '🔌'}</span>
+        <div>
+          <p style="font-size:13px;font-weight:600; color: ${c.is_online ? 'var(--text)' : 'var(--danger)'};">${c.name}</p>
+          <p class="meta-line">${c.file_count} files &nbsp;·&nbsp; ${c.limit_gb}GB limit &nbsp;·&nbsp; ${c.is_online ? '<span style="color:#22c55e;">🟢 Online</span>' : '<span style="color:#ff6b7a;">🔴 Offline</span>'}</p>
+        </div>
+      </div>
+      ${c.is_online ? `<button class="btn btn-green btn-sm" onclick="selectCloud('${c.name}')">Connect</button>` : `<button class="btn btn-red btn-sm" disabled style="opacity: 0.5;">Offline</button>`}
+    </div>`).join('');
+    }
+
+    function selectCloud(name) {
+      selectedCloud = name;
+      document.getElementById('u-connecting-to').textContent = name;
+      document.getElementById('u-connect-form').classList.remove('hidden');
+      document.getElementById('u-cpass').value = '';
+      document.getElementById('u-cpass').focus();
+    }
+
+    async function connectCloud() {
+      hideMsg('u-serr'); hideMsg('u-sok');
+      const r = await api('/api/user/connect', 'POST', {
+        cloud_name: selectedCloud,
+        password: document.getElementById('u-cpass').value
+      });
+      if (r.success) {
+        setConnectedWorkspace(r.cloud_name);
+        loadUserFiles();
+      } else showErr('u-serr', r.message);
+    }
+
+    async function uploadFiles(files) {
+      if (!files || !files.length) return;
+      const fd = new FormData();
+      for (const f of files) fd.append('files', f);
+      setUploadProgress(0, `Preparing ${files.length} file${files.length === 1 ? '' : 's'}`);
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', '/api/user/upload', true);
+      xhr.withCredentials = true;
+      xhr.upload.onprogress = (event) => {
+        if (!event.lengthComputable) return;
+        const percent = Math.min(99, Math.round((event.loaded / event.total) * 100));
+        setUploadProgress(percent, percent < 100 ? `Uploading files` : 'Finalizing upload', false);
+      };
+      xhr.onload = () => {
+        try {
+          const r = JSON.parse(xhr.responseText || '{}');
+          if (xhr.status >= 200 && xhr.status < 300 && r.success) {
+            setUploadProgress(100, `Upload successful`, false);
+            document.getElementById('upload-progress-label').textContent = `Uploaded successfully: ${r.uploaded.join(', ')}`;
+            setTimeout(() => document.getElementById('upload-progress').classList.add('hidden'), 4200);
+            loadUserFiles();
+          } else {
+            setUploadProgress(0, r.message || 'Upload failed', true);
+          }
+        } catch (err) {
+          setUploadProgress(0, 'Upload failed', true);
+        }
+      };
+      xhr.onerror = () => setUploadProgress(0, 'Network error during upload', true);
+      xhr.send(fd);
+    }
+
+    function handleDrop(e) {
+      e.preventDefault();
+      document.getElementById('u-drop').style.borderColor = 'rgba(40,215,197,.30)';
+      uploadFiles(e.dataTransfer.files);
+    }
+
+    const DEMO_USER_FILES = [
+      { id: 'demo-1', original_name: 'Sunset-over-the-bay.jpg', file_type: 'image', size: 482133, uploaded_at: 'Today, 14:02' },
+      { id: 'demo-2', original_name: 'Project-brief.pdf', file_type: 'doc', size: 128450, uploaded_at: 'Yesterday, 19:11' },
+      { id: 'demo-3', original_name: 'Trip-recap.mp4', file_type: 'video', size: 7340032, uploaded_at: 'Jun 18, 2026' },
+    ];
+    const DEMO_STORAGE_STATS = { cloud_used: 482133 + 128450 + 7340032, cloud_limit: 5 * 1024 * 1024 * 1024, user_used: 482133 + 128450 + 7340032, cloud_file_count: 3, user_file_count: 3 };
+
+    let isCloudOffline = false;
+
+    function toggleOfflineState(isOffline) {
+      isCloudOffline = isOffline;
+      const banner = document.getElementById('u-offline-banner');
+      if (banner) {
+        if (isOffline) {
+          banner.classList.remove('hidden');
+        } else {
+          banner.classList.add('hidden');
+        }
+      }
+
+      // Disable upload area
+      const dropZone = document.getElementById('u-drop');
+      const fileInput = document.getElementById('u-finput');
+      const selectBtn = document.querySelector("#u-drop button.btn-green");
+      if (dropZone && fileInput && selectBtn) {
+        if (isOffline) {
+          dropZone.style.opacity = '0.5';
+          dropZone.style.pointerEvents = 'none';
+          fileInput.disabled = true;
+          selectBtn.disabled = true;
+          selectBtn.classList.add('btn-disabled');
+        } else {
+          dropZone.style.opacity = '';
+          dropZone.style.pointerEvents = '';
+          fileInput.disabled = false;
+          selectBtn.disabled = false;
+          selectBtn.classList.remove('btn-disabled');
+        }
+      }
+    }
+
+    async function loadUserFiles() {
+      try {
+        const [files, stats] = await Promise.all([
+          api('/api/user/files'),
+          api('/api/user/storage-stats')
+        ]);
+        const online = stats && stats.is_online;
+        toggleOfflineState(!online);
+
+        allUserFiles = Array.isArray(files) ? files : [];
+        updateStorageStats(stats && !stats.error ? stats : { cloud_used: 0, cloud_limit: 5 * 1024 * 1024 * 1024, user_used: 0, cloud_file_count: 0, user_file_count: 0 });
+      } catch (err) {
+        allUserFiles = [];
+        updateStorageStats({ cloud_used: 0, cloud_limit: 5 * 1024 * 1024 * 1024, user_used: 0, cloud_file_count: 0, user_file_count: 0 });
+        toggleOfflineState(false);
+      }
+      renderUserFiles();
+    }
+
+    function updateStorageStats(stats) {
+      const cloudUsed = stats.cloud_used || 0;
+      const cloudLimit = stats.cloud_limit || 1;
+      const userUsed = stats.user_used || 0;
+      const cloudPercent = Math.min(100, Math.round((cloudUsed / cloudLimit) * 100));
+      const userPercent = cloudUsed ? Math.min(100, Math.round((userUsed / cloudUsed) * 100)) : 0;
+      document.getElementById('u-cloud-used').textContent = fmtSize(cloudUsed);
+      document.getElementById('u-cloud-sub').textContent = `${fmtSize(cloudUsed)} of ${fmtSize(cloudLimit)} total · ${stats.cloud_file_count || 0} files`;
+      document.getElementById('u-user-used').textContent = fmtSize(userUsed);
+      document.getElementById('u-user-sub').textContent = `${stats.user_file_count || 0} files in your vault`;
+      requestAnimationFrame(() => {
+        document.getElementById('u-cloud-bar').style.width = cloudPercent + '%';
+        document.getElementById('u-user-bar').style.width = userPercent + '%';
+      });
+    }
+
+    function uFilter(f) {
+      currentFilter = f;
+      ['all', 'image', 'video', 'doc', 'other'].forEach(x => {
+        document.getElementById('uf-' + x).classList.toggle('active', x === f);
+      });
+      renderUserFiles();
+    }
+
+    function renderUserFiles() {
+      const files = currentFilter === 'all' ? allUserFiles : allUserFiles.filter(f => f.file_type === currentFilter);
+      const el = document.getElementById('u-filelist');
+      if (!files.length) { el.innerHTML = emptyState('📂', 'Your vault is empty', 'Upload photos, videos, or documents to get started.'); return; }
+      el.innerHTML = files.map((f, i) => `
+    <div class="card file-card stagger-item ${isCloudOffline ? 'offline-card' : ''}" style="margin-bottom:6px;animation-delay:${Math.min(i * 0.04, 0.28)}s; opacity: ${isCloudOffline ? 0.65 : 1};">
+      <div style="display:flex;align-items:flex-start;gap:12px;flex:1;min-width:0;">
+        <div class="file-thumb ${f.file_type}">${fileEmoji(f.file_type)}</div>
+        <div style="flex:1;min-width:0;">
+          <div class="file-meta">
+            <p style="font-size:13px;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;">${f.original_name}</p>
+            <span class="badge badge-purple">${f.file_type.toUpperCase()}</span>
+          </div>
+          <p class="meta-line" style="margin-top:4px;">${fmtSize(f.size)} &nbsp;·&nbsp; ${f.uploaded_at}</p>
+        </div>
+      </div>
+      <div class="file-actions">
+        <button class="btn btn-sm btn-purple" ${isCloudOffline ? 'disabled' : ''} onclick='previewFile(${f.id}, ${JSON.stringify(f.original_name)})'>Preview</button>
+        <button class="btn btn-sm" ${isCloudOffline ? 'disabled' : ''} onclick="downloadFile(${f.id})">Download</button>
+        <button class="btn btn-red btn-sm" ${isCloudOffline ? 'disabled' : ''} onclick="delUserFile(${f.id})">Delete</button>
+      </div>
+    </div>`).join('');
+    }
+
+    async function delUserFile(id) {
+      await api('/api/user/files/' + id, 'DELETE');
+      loadUserFiles();
+    }
+
+    function downloadFile(id) {
+      window.location.href = '/api/user/files/' + id + '/download';
+    }
+
+    function fileEmoji(t) { return t === 'image' ? '🖼️' : t === 'video' ? '🎬' : t === 'doc' ? '📄' : '📁'; }
+    function fmtSize(b) {
+      if (!b) return '0 B';
+      if (b < 1024) return b + ' B';
+      if (b < 1048576) return (b / 1024).toFixed(1) + ' KB';
+      return (b / 1048576).toFixed(2) + ' MB';
+    }
+  </script>
+
+</body>
+
+</html>
