@@ -142,7 +142,7 @@ def get_db():
         
         raise Exception("OperationalError: failed to connect to PG pool")
     except Exception as e:
-        print(f"⚠️ PG Database connection failed: {e}. Falling back to local SQLite database at {DB_PATH}")
+        print(f"Warning: PG Database connection failed: {e}. Falling back to local SQLite database at {DB_PATH}")
         USE_SQLITE = True
         conn = sqlite3.connect(DB_PATH)
         conn.row_factory = sqlite3.Row
@@ -895,13 +895,13 @@ def start_cloudflare_tunnel(port=5001):
     global tunnel_url, tunnel_process
     cf_path = get_cloudflared_path()
     if not cf_path:
-        print("⚠️ cloudflared binary not found. Cloudflare Tunnel is disabled.")
+        print("Warning: cloudflared binary not found. Cloudflare Tunnel is disabled.")
         return
         
     def run_tunnel():
         global tunnel_url, tunnel_process
         cmd = [cf_path, 'tunnel', '--url', f'http://localhost:{port}']
-        print(f"🚀 Starting Cloudflare Tunnel: {' '.join(cmd)}")
+        print(f"Starting Cloudflare Tunnel: {' '.join(cmd)}")
         try:
             # Prevent console window on Windows
             cf_flags = subprocess.CREATE_NO_WINDOW if sys.platform == 'win32' else 0
@@ -919,11 +919,11 @@ def start_cloudflare_tunnel(port=5001):
                 match = re.search(r'https://[a-zA-Z0-9-]+\.trycloudflare\.com', line)
                 if match:
                     tunnel_url = match.group(0)
-                    print(f"🌐 Cloudflare Tunnel URL: {tunnel_url}")
+                    print(f"Cloudflare Tunnel URL: {tunnel_url}")
             tunnel_process.stdout.close()
             tunnel_process.wait()
         except Exception as e:
-            print(f"❌ Error running cloudflared: {e}")
+            print(f"Error running cloudflared: {e}")
             
     t = threading.Thread(target=run_tunnel)
     t.daemon = True
@@ -1093,8 +1093,8 @@ if __name__ == '__main__':
         
         if '--server' in sys.argv:
             # Server-only mode
-            print("\n✅ MyCloud server started!")
-            print("🌐 Open http://127.0.0.1:5001 in your browser\n")
+            print("\nMyCloud server started!")
+            print("Open http://127.0.0.1:5001 in your browser\n")
             app.run(debug=True, host='0.0.0.0', port=5001)
         else:
             # GUI window desktop mode
@@ -1109,8 +1109,8 @@ if __name__ == '__main__':
             t.daemon = True
             t.start()
             
-            print("\n✅ MyCloud Desktop App (Dev) started!")
-            print("🌐 Serving at http://127.0.0.1:5001 inside native frame\n")
+            print("\nMyCloud Desktop App (Dev) started!")
+            print("Serving at http://127.0.0.1:5001 inside native frame\n")
             
             wait_for_port(5001)
             webview.create_window("MyCloud Desktop (Dev)", "http://127.0.0.1:5001", width=1200, height=800)
