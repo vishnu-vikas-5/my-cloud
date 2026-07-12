@@ -13,6 +13,15 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+# Force UTF-8 encoding for stdout and stderr to prevent UnicodeEncodeErrors on Windows consoles (e.g. cp1252 charmap errors)
+try:
+    if sys.stdout and hasattr(sys.stdout, 'reconfigure'):
+        sys.stdout.reconfigure(encoding='utf-8')
+    if sys.stderr and hasattr(sys.stderr, 'reconfigure'):
+        sys.stderr.reconfigure(encoding='utf-8')
+except Exception:
+    pass
+
 DB_POOL = None
 
 IS_FROZEN = getattr(sys, 'frozen', False)
