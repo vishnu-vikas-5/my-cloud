@@ -1038,8 +1038,30 @@
       }
     }
 
-    function positionHighlight(item) {
-      if (!item || !navContainer) return;
+    navContainer.addEventListener('pointermove', (e) => {
+      const item = e.target.closest('.nav-item');
+      if (!item) {
+        // If cursor is in the padding/gap of the navbar, keep tracking the last item
+        if (currentHoveredItem) {
+          const rect = currentHoveredItem.getBoundingClientRect();
+          const navRect = navContainer.getBoundingClientRect();
+          const top = rect.top - navRect.top;
+          const left = rect.left - navRect.left;
+          
+          // Calculate offset from item center to mouse pointer
+          const centerX = rect.left + rect.width / 2;
+          const centerY = rect.top + rect.height / 2;
+          const offsetX = e.clientX - centerX;
+          const offsetY = e.clientY - centerY;
+          
+          const pullX = offsetX * 0.15;
+          const pullY = offsetY * 0.15;
+          
+          glassHighlight.style.transform = `translate3d(${left + pullX}px, ${top + pullY}px, 0)`;
+        }
+        return;
+      }
+
       const rect = item.getBoundingClientRect();
       const navRect = navContainer.getBoundingClientRect();
 
@@ -1048,37 +1070,54 @@
       const width = rect.width;
       const height = rect.height;
 
-      // Update text content for reflection layers
-      const refTop = glassHighlight.querySelector('.glass-reflection-top');
-      const refBottom = glassHighlight.querySelector('.glass-reflection-bottom');
-      if (refTop) refTop.textContent = item.textContent;
-      if (refBottom) refBottom.textContent = item.textContent;
+      // Calculate mouse offset from button center
+      const centerX = rect.left + rect.width / 2;
+      const centerY = rect.top + rect.height / 2;
+      const offsetX = e.clientX - centerX;
+      const offsetY = e.clientY - centerY;
+
+      // Magnetic pull translation (e.g. shift up to 15% towards cursor)
+      const pullX = offsetX * 0.15;
+      const pullY = offsetY * 0.15;
+
+      if (currentHoveredItem !== item) {
+        currentHoveredItem = item;
+        const refTop = glassHighlight.querySelector('.glass-reflection-top');
+        const refBottom = glassHighlight.querySelector('.glass-reflection-bottom');
+        if (refTop) refTop.textContent = item.textContent;
+        if (refBottom) refBottom.textContent = item.textContent;
+        
+        // Fluid transition when shifting to a new button
+        glassHighlight.style.transition = 'transform 0.32s cubic-bezier(0.16, 1, 0.3, 1), width 0.32s cubic-bezier(0.16, 1, 0.3, 1), height 0.32s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.2s ease';
+      } else {
+        // Fast tracking within the same button
+        glassHighlight.style.transition = 'transform 0.12s cubic-bezier(0.25, 1, 0.5, 1), width 0.25s cubic-bezier(0.16, 1, 0.3, 1), height 0.25s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.2s ease';
+      }
 
       glassHighlight.style.width = `${width}px`;
       glassHighlight.style.height = `${height}px`;
-      glassHighlight.style.transform = `translate3d(${left}px, ${top}px, 0)`;
+      glassHighlight.style.transform = `translate3d(${left + pullX}px, ${top + pullY}px, 0)`;
       glassHighlight.style.opacity = '1';
-    }
-
-    function hideHighlight() {
-      glassHighlight.style.opacity = '0';
-    }
-
-    navItems.forEach(item => {
-      item.addEventListener('mouseenter', () => {
-        currentHoveredItem = item;
-        positionHighlight(item);
-      });
     });
 
     navContainer.addEventListener('mouseleave', () => {
       currentHoveredItem = null;
-      hideHighlight();
+      glassHighlight.style.transition = 'transform 0.32s cubic-bezier(0.16, 1, 0.3, 1), width 0.32s cubic-bezier(0.16, 1, 0.3, 1), height 0.32s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease';
+      glassHighlight.style.opacity = '0';
     });
 
     window.addEventListener('resize', () => {
       if (currentHoveredItem) {
-        requestAnimationFrame(() => positionHighlight(currentHoveredItem));
+        const rect = currentHoveredItem.getBoundingClientRect();
+        const navRect = navContainer.getBoundingClientRect();
+        const top = rect.top - navRect.top;
+        const left = rect.left - navRect.left;
+        const width = rect.width;
+        const height = rect.height;
+        
+        glassHighlight.style.width = `${width}px`;
+        glassHighlight.style.height = `${height}px`;
+        glassHighlight.style.transform = `translate3d(${left}px, ${top}px, 0)`;
       }
     });
 
