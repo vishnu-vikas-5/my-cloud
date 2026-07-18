@@ -981,7 +981,7 @@ def download_file(file_id):
     if not cloud:
         return jsonify({'error': 'Cloud not found'}), 404
 
-    if not is_cloud_online(cloud['storage_path'], cloud.get('tunnel_url')):
+    if not is_cloud_online(cloud['storage_path'], cloud['tunnel_url']):
         # Fallback: check if we have a remote tunnel_url active
         conn = get_db()
         c_row = conn.execute("SELECT tunnel_url FROM clouds WHERE name=?", (f['cloud_name'],)).fetchone()
@@ -1031,7 +1031,7 @@ def preview_file(file_id):
     if not cloud:
         return jsonify({'error': 'Cloud not found'}), 404
 
-    if not is_cloud_online(cloud['storage_path'], cloud.get('tunnel_url')):
+    if not is_cloud_online(cloud['storage_path'], cloud['tunnel_url']):
         # Fallback: check if we have a remote tunnel_url active
         conn = get_db()
         c_row = conn.execute("SELECT tunnel_url FROM clouds WHERE name=?", (f['cloud_name'],)).fetchone()

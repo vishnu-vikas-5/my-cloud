@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link
-    href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500&display=swap"
+    href="https://fonts.googleapis.com/css2?family=Geist:wght@100..900&family=JetBrains+Mono:wght@500&display=swap"
     rel="stylesheet" />
   <style>
     :root {
@@ -28,7 +28,7 @@
       --accent-3: #c084fc;
       --danger: #ff6b7a;
       --radius: 24px;
-      --font: "Outfit", system-ui, sans-serif;
+      --font: "Geist", system-ui, sans-serif;
       --mono: "JetBrains Mono", Consolas, monospace;
       --chip-bg: rgba(180, 151, 207, 0.15);
       --chip-text: #e8dff5;
@@ -46,6 +46,7 @@
 
     html {
       scroll-behavior: smooth;
+      background: var(--bg);
     }
 
     body {
@@ -658,9 +659,12 @@
 
     .choice-card {
       cursor: pointer;
-      text-align: left;
-      padding: 1.1rem;
-      transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
+      text-align: center;
+      padding: 20px 16px;
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      transition: all 0.2s ease;
     }
 
     .choice-card:hover {
@@ -1670,6 +1674,7 @@
     .toast-icon {
       font-size: 16px;
     }
+    .tab-bar {
       display: flex;
       gap: 8px;
       flex-wrap: wrap;
@@ -1679,7 +1684,7 @@
       box-shadow: 0 12px 24px rgba(2, 8, 23, .12);
     }
 
-    body[data-theme="light"] {
+    [data-theme="light"] {
       --bg: #eef2f8;
       --bg-2: #fafbfd;
       --surface: rgba(255, 255, 255, .88);
@@ -1700,7 +1705,15 @@
       --badge-green-text: #0f766e;
       --badge-purple-bg: rgba(37, 99, 235, .10);
       --badge-purple-text: #1d4ed8;
-      color: var(--text);
+    }
+
+    html[data-theme="light"] {
+      background: var(--bg) !important;
+    }
+
+    body[data-theme="light"] {
+      background: var(--bg) !important;
+      color: var(--text) !important;
     }
 
     body[data-theme="light"]::before {
@@ -1903,6 +1916,19 @@
       color: var(--text);
     }
 
+    body[data-theme="light"] .choice-card {
+      background: rgba(15, 23, 42, 0.04) !important;
+      border: 1px solid rgba(15, 23, 42, 0.08) !important;
+    }
+
+    body[data-theme="light"] .choice-card .choice-title {
+      color: var(--text) !important;
+    }
+
+    body[data-theme="light"] .choice-card .choice-desc {
+      color: var(--muted) !important;
+    }
+
     body[data-theme="light"] .hero-copy,
     body[data-theme="light"] .auth-copy {
       color: var(--muted);
@@ -1986,7 +2012,7 @@
         radial-gradient(ellipse 80% 50% at 20% -10%, rgba(37, 99, 235, .12), transparent 55%),
         radial-gradient(ellipse 60% 45% at 85% 5%, rgba(13, 148, 136, .10), transparent 50%),
         radial-gradient(ellipse 50% 40% at 50% 100%, rgba(124, 58, 237, .08), transparent 55%),
-        linear-gradient(180deg, var(--bg) 0%, var(--bg-2) 100%);
+        linear-gradient(180deg, var(--bg) 0%, var(--bg-2) 100%) !important;
     }
 
     body[data-theme="light"] .orb-1 {
@@ -2489,19 +2515,16 @@
           devices.</p>
 
         <div class="login-choices hero-animate d3">
-          <div class="card choice-card" onclick="goto('pg-admin-login')"
-            style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06); padding:20px 16px; border-radius:18px; text-align:center; transition:all 0.2s ease;">
+          <div class="card choice-card" onclick="goto('pg-admin-login')">
             <div class="choice-icon admin" style="margin:0 auto 12px auto;">🛡️</div>
-            <p class="choice-title" style="font-weight:700; font-size:16px; color:var(--text);">Admin Portal</p>
-            <p class="choice-desc" style="font-size:12px; color:var(--muted); margin-top:4px;">Manage storage & users
-            </p>
+            <p class="choice-title">Admin Portal</p>
+            <p class="choice-desc">Manage storage & users</p>
           </div>
 
-          <div class="card choice-card" onclick="goto('pg-user-login')"
-            style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06); padding:20px 16px; border-radius:18px; text-align:center; transition:all 0.2s ease;">
+          <div class="card choice-card" onclick="goto('pg-user-login')">
             <div class="choice-icon user" style="margin:0 auto 12px auto;">👤</div>
-            <p class="choice-title" style="font-weight:700; font-size:16px; color:var(--text);">User Portal</p>
-            <p class="choice-desc" style="font-size:12px; color:var(--muted); margin-top:4px;">Upload & access files</p>
+            <p class="choice-title">User Portal</p>
+            <p class="choice-desc">Upload & access files</p>
           </div>
         </div>
 
@@ -3514,6 +3537,7 @@
 
     function applyTheme(theme) {
       const nextTheme = theme === 'light' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', nextTheme);
       document.body.setAttribute('data-theme', nextTheme);
       localStorage.setItem('mycloud-theme', nextTheme);
 
@@ -3527,7 +3551,7 @@
     }
 
     function toggleTheme() {
-      const current = document.body.getAttribute('data-theme') || 'dark';
+      const current = document.documentElement.getAttribute('data-theme') || 'dark';
       applyTheme(current === 'dark' ? 'light' : 'dark');
     }
 
